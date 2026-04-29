@@ -1,5 +1,6 @@
 #include <Application.h>
 #include <bobcat_ui/bobcat_ui.h>
+#include <bobcat_ui/dropdown.h>
 #include <fstream>
 #include <sstream>
 
@@ -50,8 +51,14 @@ void Application::initData() {
 Application::Application() {
     // this is a change that I made - John Quinn
 
-    window = new Window(25, 75, 400, 400, "Simple Navigation Project");
+    window = new Window(25, 75, 800, 400, "Simple Navigation Project");
+    fromDropdown = new Dropdown(25, 25, 165, 25, "Origin");
+    toDropdown = new Dropdown(210, 25, 165, 25, "Destination");
+    searchDropdown = new Dropdown(25, 75, 350, 25, "Search Type");
+    searchButton = new Button(25, 125, 350, 25, "Search");
 
+    clearButton = new Button(25, 350, 350, 25, "Clear");
+    showAllButton = new Button(25, 300, 350, 25, "Show All Flights Connections");
 
     window->show();
 }
