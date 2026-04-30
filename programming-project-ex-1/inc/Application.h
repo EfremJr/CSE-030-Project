@@ -20,6 +20,8 @@ class Application : public bobcat::Application_ {
 
     void initData();
     
+    void onClick(bobcat::Widget* sender);
+    
 public:
     Application();
 };
