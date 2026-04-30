@@ -92,6 +92,16 @@ inline std::ostream &operator<<(std::ostream &os, Waypoint *wp) {
 
 struct Graph {
     ArrayList<Vertex *> vertices;
+    
+    //Destructor for Graph
+    ~Graph() {
+        for (int i = 0; i < vertices.size(); i++) {
+            for (int j = 0; j < vertices[i]->edgeList.size(); j++) {
+                delete vertices[i]->edgeList[j];
+            }
+            delete vertices [i];
+        }
+    }
 
     void addVertex(Vertex *v) { vertices.append(v); }
 
@@ -120,6 +130,10 @@ struct Graph {
             result = frontier.dequeue();
 
             if (result->vertex == destination) {
+                //Destructor for BFS
+                while (!frontier.isEmpty()) {
+                    delete frontier.dequeue();
+                }
                 return result;
             }
 
@@ -181,6 +195,9 @@ struct Graph {
             result = frontier.pop();
 
             if (result->vertex == destination) {
+                while (!frontier.isEmpty()) {
+                    delete frontier.pop();
+                }
                 return result;
             }
 
@@ -330,6 +347,9 @@ struct Graph {
                                 b--;
                             }
                         }
+                        //Deleting unused child if wont be used further after added to Seen
+                    } else {
+                        delete result->children[i];
                     }
                 }
             }
@@ -463,6 +483,9 @@ struct Graph {
                                 b--;
                             }
                         }
+                    //Deleting unused child if wont be used further after added to Seen//Deleting unused child if wont be used further after added to Seen
+                    } else {
+                        delete result->children[i];
                     }
                 }
             }
