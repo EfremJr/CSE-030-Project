@@ -10,20 +10,7 @@
 #include <stdexcept>
 #include <string>
 
-struct Edge;
-
-struct Vertex {
-    std::string data;
-    ArrayList<Edge *> edgeList;
-
-    Vertex(std::string data) { this->data = data; }
-};
-
-inline std::ostream &operator<<(std::ostream &os, Vertex *v) {
-    os << v->data;
-
-    return os;
-}
+struct Vertex;
 
 struct Edge {
     Vertex *from;
@@ -41,6 +28,25 @@ struct Edge {
 
 inline std::ostream &operator<<(std::ostream &os, Edge *e) {
     os << "(" << e->from << ", " << e->to << ") - " << "($" << e->cost << ", " << e->time << ")";
+
+    return os;
+}
+
+struct Vertex {
+    std::string data;
+    ArrayList<Edge *> edgeList;
+
+    Vertex(std::string data) { this->data = data; }
+
+    ~Vertex() {
+        for (int i = 0; i < edgeList.size(); i++) {
+            delete edgeList[i];
+        }
+    }
+};
+
+inline std::ostream &operator<<(std::ostream &os, Vertex *v) {
+    os << v->data;
 
     return os;
 }
@@ -96,10 +102,7 @@ struct Graph {
     //Destructor for Graph
     ~Graph() {
         for (int i = 0; i < vertices.size(); i++) {
-            for (int j = 0; j < vertices[i]->edgeList.size(); j++) {
-                delete vertices[i]->edgeList[j];
-            }
-            delete vertices [i];
+            delete vertices[i];
         }
     }
 
@@ -173,6 +176,8 @@ struct Graph {
                 }
             }
             std::cout << std::endl;
+
+            delete result;
         }
 
         return nullptr;
@@ -230,6 +235,8 @@ struct Graph {
                 }
             }
             std::cout << std::endl;
+
+            delete result;
         }
 
         return nullptr;
@@ -253,6 +260,9 @@ struct Graph {
             result = frontier.removeLast();
 
             if (result->vertex == destination) {
+                while (frontier.size() > 0) {
+                    delete frontier.removeLast();
+                }
                 return result;
             }
 
@@ -366,6 +376,8 @@ struct Graph {
                 }
             }
             std::cout << std::endl;
+
+            delete result;
         }
 
         return nullptr;
@@ -389,6 +401,9 @@ struct Graph {
             result = frontier.removeLast();
 
             if (result->vertex == destination) {
+                while (frontier.size() > 0) {
+                    delete frontier.removeLast();
+                }
                 return result;
             }
 
@@ -502,6 +517,8 @@ struct Graph {
                 }
             }
             std::cout << std::endl;
+
+            delete result;
         }
 
         return nullptr;
