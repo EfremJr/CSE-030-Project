@@ -176,8 +176,6 @@ struct Graph {
                 }
             }
             std::cout << std::endl;
-
-            delete result;
         }
 
         return nullptr;
@@ -235,8 +233,6 @@ struct Graph {
                 }
             }
             std::cout << std::endl;
-
-            delete result;
         }
 
         return nullptr;
@@ -376,8 +372,6 @@ struct Graph {
                 }
             }
             std::cout << std::endl;
-
-            delete result;
         }
 
         return nullptr;
@@ -517,8 +511,6 @@ struct Graph {
                 }
             }
             std::cout << std::endl;
-
-            delete result;
         }
 
         return nullptr;
