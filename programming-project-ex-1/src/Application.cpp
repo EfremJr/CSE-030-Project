@@ -91,6 +91,8 @@ Application::Application() {
     showAllButton = new Button(25, 300, 350, 25, "Show All Flights Connections");
     
     ON_CLICK(searchButton, Application::onClick);
+
+    canvas = new Canvas(425, 25, 350, 350);
     
     window->show();
 }

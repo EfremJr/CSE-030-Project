@@ -4,6 +4,7 @@
 #include <bobcat_ui/all.h>
 #include <Graph.h>
 #include <bobcat_ui/dropdown.h>
+#include <Canvas.h>
 
 class Application : public bobcat::Application_ {
     bobcat::Window* window;
@@ -14,6 +15,8 @@ class Application : public bobcat::Application_ {
     bobcat::Button* searchButton;
     bobcat::Button* clearButton;
     bobcat::Button* showAllButton;
+
+    Canvas* canvas;
 
     Graph g;
     ArrayList<Vertex*> cities;
