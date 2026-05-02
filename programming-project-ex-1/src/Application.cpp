@@ -7,45 +7,31 @@
 using namespace bobcat;
 using namespace std;
 
-void Application::initData() {
-    fstream file;
+void Application::initData(istream* vertices, istream* edges) {
+    string line;
 
-    // read vertices from file
-    file.open("./assets/vertices.csv", ios::in);
-    if (file.is_open()) {
-        string line;
-        
-        while(getline(file, line)) {
-            cities.append(new Vertex(line));
-        }
-
-        file.close();
+    while(getline(*vertices, line)) {
+        cities.append(new Vertex(line));
     }
 
     // add vertices to graph
     for (int i = 0; i < cities.size(); i++) {
         g.addVertex(cities[i]);
     }
-    
-    // read edges from file and add them as edges to the graph
-    file.open("./assets/edges.csv", ios::in);
-    if (file.is_open()) {
-        string line;
-        
-        while(getline(file, line)) {
-            stringstream ss(line);
-            string from, to, time, cost;
 
-            getline(ss, from, ',');
-            getline(ss, to, ',');
-            getline(ss, time, ',');
-            getline(ss, cost, ',');
+    while(getline(*edges, line)) {
+        stringstream ss(line);
+        string from, to, time, cost;
 
-            g.addEdge(cities[stoi(from)], cities[stoi(to)], stoi(cost), stoi(time));
-        }
+        getline(ss, from, ',');
+        getline(ss, to, ',');
+        getline(ss, time, ',');
+        getline(ss, cost, ',');
 
-        file.close();
+        g.addEdge(cities[stoi(from)], cities[stoi(to)], stoi(cost), stoi(time));
     }
+
+    path = nullptr;
 }
 
 void Application::onClick(bobcat::Widget* sender){
@@ -55,21 +41,28 @@ void Application::onClick(bobcat::Widget* sender){
         std::string searchOption = searchDropdown->text();
 
         if (searchOption == "Least Stops"){
-            Waypoint* path = g.bfs(cities[fromIndex], cities[toIndex]);
+            path = g.bfs(cities[fromIndex], cities[toIndex]);
         }
         else if (searchOption == "Lowest Cost"){
-            Waypoint* path = g.ucsCost(cities[fromIndex], cities[toIndex]);
+            path = g.ucsCost(cities[fromIndex], cities[toIndex]);
         }
         else if (searchOption == "Lowest Time"){
-            Waypoint* path = g.ucsTime(cities[fromIndex], cities[toIndex]);
+            path = g.ucsTime(cities[fromIndex], cities[toIndex]);
         }
+        cout << path->vertex->data;
+        Waypoint* temp = path;
+        while (temp->parent != nullptr) {
+            temp = temp->parent;
+            cout << " <- " << temp->vertex->data;
+        }
+        cout << endl;
+    }
+    else if (sender == clearButton) {
+        path = nullptr;
     }
 }
 
-Application::Application() {
-    // this is a change that I made - John Quinn
-    initData();
-
+void Application::initUI() {
     window = new Window(25, 75, 800, 400, "Simple Navigation Project");
     fromDropdown = new Dropdown(25, 25, 165, 25, "Origin");
     toDropdown = new Dropdown(210, 25, 165, 25, "Destination");
@@ -91,8 +84,30 @@ Application::Application() {
     showAllButton = new Button(25, 300, 350, 25, "Show All Flights Connections");
     
     ON_CLICK(searchButton, Application::onClick);
+    ON_CLICK(clearButton, Application::onClick);
 
     canvas = new Canvas(425, 25, 350, 350);
     
     window->show();
+}
+
+Application::Application() {
+    // this is a change that I made - John Quinn
+
+    // By default, add data from the files in the assets folder
+    fstream vertices, edges;
+    vertices.open("./assets/vertices.csv", ios::in);
+    edges.open("./assets/edges.csv", ios::in);
+    if (vertices.is_open() && edges.is_open()) {
+        initData(&vertices, &edges);
+        vertices.close();
+        edges.close();
+    }
+
+    initUI();
+}
+
+Application::Application(std::istream* vertices, std::istream* edges) {
+    initData(vertices, edges);
+    initUI();
 }

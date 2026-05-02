@@ -5,6 +5,7 @@
 #include <Graph.h>
 #include <bobcat_ui/dropdown.h>
 #include <Canvas.h>
+#include <iostream>
 
 class Application : public bobcat::Application_ {
     bobcat::Window* window;
@@ -21,12 +22,20 @@ class Application : public bobcat::Application_ {
     Graph g;
     ArrayList<Vertex*> cities;
 
-    void initData();
+    Waypoint* path;
+
+    void initData(std::istream* vertices, std::istream* edges);
+
+    void initUI();
     
     void onClick(bobcat::Widget* sender);
     
 public:
     Application();
+
+    Application(std::istream* vertices, std::istream* edges);
+
+    friend struct TestApplication;
 };
 
 #endif
