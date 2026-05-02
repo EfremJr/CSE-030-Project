@@ -11,7 +11,7 @@ void Application::initData(istream* vertices, istream* edges) {
     string line;
 
     while(getline(*vertices, line)) {
-        cities.append(new Vertex(line));
+        cities.append(new Vertex(line, cities.size()));
     }
 
     // add vertices to graph

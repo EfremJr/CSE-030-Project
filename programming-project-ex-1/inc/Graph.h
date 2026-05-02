@@ -34,9 +34,10 @@ inline std::ostream &operator<<(std::ostream &os, Edge *e) {
 
 struct Vertex {
     std::string data;
+    int index;
     ArrayList<Edge *> edgeList;
 
-    Vertex(std::string data) { this->data = data; }
+    Vertex(std::string data, int index) { this->data = data; this->index = index;}
 
     ~Vertex() {
         for (int i = 0; i < edgeList.size(); i++) {
