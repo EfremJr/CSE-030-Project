@@ -1,3 +1,5 @@
+#include "Graph.h"
+#include "Visualizers.h"
 #include <Application.h>
 #include <bobcat_ui/bobcat_ui.h>
 #include <bobcat_ui/dropdown.h>
@@ -56,9 +58,19 @@ void Application::onClick(bobcat::Widget* sender){
             cout << " <- " << temp->vertex->data;
         }
         cout << endl;
+        graphVisualizer->visualizePath(path);
+        graphVisualizer->renderMode = RenderMode::PATH;
+        canvas->redraw();
     }
     else if (sender == clearButton) {
         path = nullptr;
+        graphVisualizer->clearPath();
+        graphVisualizer->renderMode = RenderMode::VERTICES;
+        canvas->redraw();
+    }
+    else if (sender == showAllButton) {
+        graphVisualizer->renderMode = RenderMode::EVERYTHING;
+        canvas->redraw();
     }
 }
 
@@ -85,8 +97,11 @@ void Application::initUI() {
     
     ON_CLICK(searchButton, Application::onClick);
     ON_CLICK(clearButton, Application::onClick);
+    ON_CLICK(showAllButton, Application::onClick);
 
-    canvas = new Canvas(425, 25, 350, 350);
+    graphVisualizer = new GraphVisualizer(&g);
+    canvas = new Canvas(graphVisualizer, 425, 25, 350, 350);
+    canvas->redraw();
     
     window->show();
 }

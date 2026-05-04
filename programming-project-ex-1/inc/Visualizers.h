@@ -1,26 +1,46 @@
 #ifndef VISUALIZERS_H
 #define VISUALIZERS_H
 
+#include "ArrayList.h"
+#include "HashTable.h"
+#include <GL/gl.h>
 #include <iostream>
 #include <Graph.h>
+#include <Visualizer.h>
+#include <string>
 
-class VertexVisualizer {
+class VertexVisualizer : public Visualizer {
 
 public:
-    int x;
-    int y;
+    float x;
+    float y;
     std::string name;
     int cityIndex;
 
-    VertexVisualizer(int x, int y, std::string name, int cityIndex){
+    VertexVisualizer(float x, float y, std::string name, int cityIndex){
         this->x = x;
         this->y = y;
         this->name = name;
         this->cityIndex = cityIndex;
     }
+
+    void drawColor(float r, float g, float b) {
+        std::cout << "    Rending Vertex (" << x << ", " << y << ")" << std::endl;
+
+        glColor3f(r, g, b);
+        glPointSize(10.0);
+
+        glBegin(GL_POINTS);
+            glVertex2f(x, y);
+        glEnd();
+    }
+
+    void draw() {
+        drawColor(0.0, 0.0, 0.0);
+    }
 };
 
-class EdgeVisualizer {
+class EdgeVisualizer : public Visualizer {
     
 public:
     VertexVisualizer* vertex1;
@@ -34,69 +54,152 @@ public:
         this->cost = cost;
         this->time = time;
     }
+
+    void drawColor(float r, float g, float b) {
+        glColor3f(r, g, b);
+        glLineWidth(2.0);
+
+        glBegin(GL_LINES);
+            glVertex2f(vertex1->x, vertex1->y);
+            glVertex2f(vertex2->x, vertex2->y);
+        glEnd();
+    }
+
+    void draw() {
+        drawColor(0.0, 0.0, 0.0);
+    }
 };
 
-struct VisualPath {
-    ArrayList<VertexVisualizer*> vertices;
-    ArrayList<EdgeVisualizer*> edges;
+enum RenderMode {
+    VERTICES,
+    PATH,
+    EVERYTHING
 };
 
-class GraphVisualizer {
+class GraphVisualizer : public Visualizer {
 
 public:
     ArrayList<VertexVisualizer*> vertices;
     ArrayList<EdgeVisualizer*> edges;
+    
+    ArrayList<VertexVisualizer*> pathVertices;
+    ArrayList<EdgeVisualizer*> pathEdges;
+    bool pathExists;
+    
+    RenderMode renderMode;
 
     GraphVisualizer(Graph* graph){
-        for (int i = 0; i < graph->vertices.size(); i++){
+        // Adding VertexVisualizers
+        float dif = 2.0 / ( (float) graph->vertices.size() + 1);
+        for (int i = 0; i < graph->vertices.size(); i++) {
             Vertex* currentVertex = graph->vertices[i];
-            //TODO: Calculate x and y for drawing vertex based on amount of vertices
 
-            VertexVisualizer* visualVertex = new VertexVisualizer(0, 0, currentVertex->data, currentVertex->index);
+            VertexVisualizer* visualVertex = new VertexVisualizer(-1.0 + dif * (i+1), -1.0 + dif * (i+1), currentVertex->data, currentVertex->index);
             vertices.append(visualVertex);
+        }
+        
+        // Adding EdgeVisualizers
+        for (int i = 0; i < graph->vertices.size(); i++) {
+            Vertex* vertex = graph->vertices[i];
 
-            for (int j = 0; j < currentVertex->edgeList.size(); j++) {
-                Edge* currentEdge = currentVertex->edgeList[j];
-                Vertex* destination = currentEdge->to;
-
-                // Condition only works if all edges are two-way
-                if (currentVertex->index > destination->index){
-                    VertexVisualizer* v1 = vertices[currentVertex->index];
-                    VertexVisualizer* v2 = vertices[destination->index];
-                    
-                    EdgeVisualizer* visualEdge = new EdgeVisualizer(v1, v2, currentEdge->cost, currentEdge->time);
-                    edges.append(visualEdge);
+            for (int j = 0; j < vertex->edgeList.size(); j++) {
+                Edge* edge = vertex->edgeList[j];
+                
+                // Doesn't add edge if it's already in list
+                bool seen = false;
+                for (int k = 0; k < edges.size(); k++) {
+                    EdgeVisualizer* compEdge = edges[k];
+                    if (    (compEdge->vertex1->cityIndex == edge->from->index && compEdge->vertex2->cityIndex == edge->to->index)
+                        ||  (compEdge->vertex1->cityIndex == edge->to->index && compEdge->vertex2->cityIndex == edge->from->index) ) {
+                        seen = true;
+                        break;
+                    }
                 }
+                if (seen) {
+                    continue;
+                }
+
+                EdgeVisualizer* visualEdge = new EdgeVisualizer(vertices[edge->from->index], vertices[edge->to->index], edge->cost, edge->time);
+                edges.append(visualEdge);
             }
         }
+        renderMode = RenderMode::VERTICES;
+        pathExists = false;
     }
-
-    VertexVisualizer* visualizedVertex(Vertex* vertex) { return vertices[vertex->index]; }
     
-    EdgeVisualizer* visualizedEdge(Vertex* vertex1, Vertex* vertex2) {
+    EdgeVisualizer* visualizedEdge(int index1, int index2) {
         for (int i = 0; i < edges.size(); i++) {
-            if ( (edges[i]->vertex1->cityIndex == vertex1->index && edges[i]->vertex2->cityIndex == vertex2->index)
-                || (edges[i]->vertex1->cityIndex == vertex2->index && edges[i]->vertex2->cityIndex == vertex1->index)) {
+            if (    (edges[i]->vertex1->cityIndex == index1 && edges[i]->vertex2->cityIndex == index2)
+                ||  (edges[i]->vertex1->cityIndex == index2 && edges[i]->vertex2->cityIndex == index1) ){
                 return edges[i];
             }
         }
-        return nullptr;
+        throw std::logic_error("There doesn't exist an edge between these vertexes");
     }
 
-    VisualPath visualizePath(Waypoint* endpoint) {
-        VisualPath path;
+    void visualizePath(Waypoint* endpoint) {
+        clearPath();
 
-        Waypoint* temp = endpoint;
-        while (temp->parent != nullptr) {
-            VertexVisualizer* tempVertex = visualizedVertex(temp->vertex);
-            EdgeVisualizer* edge = visualizedEdge(temp->vertex, temp->parent->vertex);
+        Waypoint* position = endpoint;
+        while (position->parent != nullptr) {
+            pathVertices.append(vertices[position->vertex->index]);
 
-            path.vertices.append(tempVertex);
-            path.edges.append(edge);
+            EdgeVisualizer* edge = visualizedEdge(position->vertex->index, position->parent->vertex->index);
+            pathEdges.append(edge);
+            
+            position = position->parent;
         }
-        path.vertices.append(visualizedVertex(temp->parent->vertex));
+        pathVertices.append(vertices[position->vertex->index]);
 
-        return path;
+        pathExists = true;
+    }
+
+    void clearPath() {
+        while (pathVertices.size() > 0) {
+            pathVertices.removeLast();
+        }
+        while (pathEdges.size() > 0) {
+            pathEdges.removeLast();
+        }
+
+        pathExists = false;
+    }
+
+    void draw() {
+        if (renderMode == RenderMode::VERTICES) {
+            std::cout << "Rendering Vertices" << std::endl;
+            for (int i = 0; i < vertices.size(); i++) {
+                vertices[i]->draw();
+            }
+        }
+        else if (renderMode == RenderMode::PATH) {
+            std::cout << "Rendering Path" << std::endl;
+            HashTable<std::string> seen;
+            if (pathExists) {
+                for (int i = 0; i < pathVertices.size(); i++) {
+                    pathVertices[i]->drawColor(1.0, 0.0, 0.0);
+                    seen.insert(pathVertices[i]->name);
+                }
+                for (int i = 0; i < pathEdges.size(); i++) {
+                    pathEdges[i]->drawColor(1.0, 0.0, 0.0);
+
+                }
+            }
+            for (int i = 0; i < vertices.size(); i++) {
+                if (!seen.search(vertices[i]->name)) {
+                    vertices[i]->draw();
+                }
+            }
+        }
+        else if (renderMode == RenderMode::EVERYTHING) {
+            std::cout << "Rendering Everything" << std::endl;
+            for (int i = 0; i < vertices.size(); i++) {
+                vertices[i]->draw();
+            }
+            for (int i = 0; i < edges.size(); i++) {
+                edges[i]->draw();
+            }
+        }
     }
 };
 

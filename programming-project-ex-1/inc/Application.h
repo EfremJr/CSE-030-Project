@@ -1,6 +1,7 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
+#include "Visualizers.h"
 #include <bobcat_ui/all.h>
 #include <Graph.h>
 #include <bobcat_ui/dropdown.h>
@@ -17,10 +18,11 @@ class Application : public bobcat::Application_ {
     bobcat::Button* clearButton;
     bobcat::Button* showAllButton;
 
-    Canvas* canvas;
-
     Graph g;
     ArrayList<Vertex*> cities;
+
+    Canvas* canvas;
+    GraphVisualizer* graphVisualizer;
 
     Waypoint* path;
 

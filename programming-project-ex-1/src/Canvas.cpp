@@ -1,12 +1,10 @@
 #include "Canvas.h"
 #include <GL/freeglut.h>
 
-Canvas::Canvas(int x, int y, int w, int h) : Canvas_ (x, y, w, h) {
-    //
+Canvas::Canvas(Visualizer* visualizer, int x, int y, int w, int h) : Canvas_ (x, y, w, h) {
+    this->visualizer = visualizer;
 }
 
 void Canvas::render() {
-    glBegin(GL_POINTS);
-        glVertex2f(0.0, 0.0);
-    glEnd();
+    visualizer->draw();
 }

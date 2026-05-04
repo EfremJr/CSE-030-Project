@@ -2,11 +2,13 @@
 #define CANVAS_H
 
 #include <bobcat_ui/all.h>
+#include <Visualizer.h>
 
 class Canvas : public bobcat::Canvas_ {
+    Visualizer* visualizer;
     
 public:
-    Canvas(int x, int y, int w, int h);
+    Canvas(Visualizer* visualizer, int x, int y, int w, int h);
 
     void render();
 };
