@@ -141,7 +141,7 @@ public:
                         vertices[j]->y += step;
                     }
                 // If there is no Edge and too close, move them apart
-                } else if (!edgeExists && squareDist < squareMin) {
+                } else if (squareDist < squareMin) {
                     if (vertices[i]->x < vertices[j]->x) {
                         vertices[i]->x -= step;
                         vertices[j]->x += step;
