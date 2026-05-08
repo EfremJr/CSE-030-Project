@@ -81,7 +81,70 @@ void Application::onClick(bobcat::Widget* sender){
 }
 
 void Application::onCanvasMouseDown(bobcat::Widget* sender, float mx, float my){
-    visualizerBox->label(to_string(mx) + to_string(my));
+    for (int i = 0; i < graphVisualizer->vertices.size(); i++){
+        VertexVisualizer* v = graphVisualizer->vertices[i];
+        float distX = mx - v->x;
+        float distY = my - v->y;
+        float distanceSq = (distX * distX) + (distY * distY);
+        if (distanceSq <= 0.0025){
+            visualizerBox->label(v->name);
+            return;
+        }
+    }
+    if (graphVisualizer->renderMode == RenderMode::PATH){
+        for (int i = 0; i < graphVisualizer->pathEdges.size(); i++){
+            EdgeVisualizer* e = graphVisualizer->pathEdges[i];
+            float x1 = e->vertex1->x;
+            float y1 = e->vertex1->y;
+            float x2 = e->vertex2->x;
+            float y2 = e->vertex2->y;
+
+            float lengthSq = ((x2-x1)*(x2-x1))+((y2-y1)*(y2-y1));
+
+            float t = ((mx-x1)*(x2-x1) + (my-y1)*(y2-y1)) / lengthSq;
+
+            t = max(0.0f, min(1.0f, t));
+
+            float closestX = x1 + t * (x2 - x1);
+            float closestY = y1 + t * (y2 - y1);
+
+            float distX = mx - closestX;
+            float distY = my - closestY;
+
+            float distanceSq = (distX * distX) + (distY * distY);
+            if (distanceSq <= 0.0015){
+                visualizerBox->label(e->vertex1->name + " -> " + e->vertex2->name + "  Cost: $" + to_string(e->cost) + "  Time: " + to_string(e->time) + "H");
+                return;
+            }
+        }
+    }
+    if (graphVisualizer->renderMode == RenderMode::EVERYTHING){
+        for (int i = 0; i < graphVisualizer->edges.size(); i++){
+            EdgeVisualizer* e = graphVisualizer->edges[i];
+            float x1 = e->vertex1->x;
+            float y1 = e->vertex1->y;
+            float x2 = e->vertex2->x;
+            float y2 = e->vertex2->y;
+
+            float lengthSq = ((x2-x1)*(x2-x1))+((y2-y1)*(y2-y1));
+
+            float t = ((mx-x1)*(x2-x1) + (my-y1)*(y2-y1)) / lengthSq;
+
+            t = max(0.0f, min(1.0f, t));
+
+            float closestX = x1 + t * (x2 - x1);
+            float closestY = y1 + t * (y2 - y1);
+
+            float distX = mx - closestX;
+            float distY = my - closestY;
+
+            float distanceSq = (distX * distX) + (distY * distY);
+            if (distanceSq <= 0.001){
+                visualizerBox->label(e->vertex1->name + " -> " + e->vertex2->name + "  Cost: $" + to_string(e->cost) + "  Time: " + to_string(e->time) + "H");
+                return;
+            }
+        }
+    }
 }
 
 void Application::initUI() {
@@ -118,6 +181,7 @@ void Application::initUI() {
     
     regenGraphButton = new Button(500, 2, 200, 20, "Regenerate Graph");
     visualizerBox = new TextBox(425, 375, 350, 25, "Click on the graph for info!");
+    visualizerBox->labelsize(12);
     ON_MOUSE_DOWN(canvas, Application::onCanvasMouseDown);
     ON_CLICK(regenGraphButton, Application::onClick);
     
