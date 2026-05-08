@@ -168,6 +168,10 @@ public:
         }
     }
 
+    void defaultSpreadVertices() {
+        spreadVertices(0.1, 0.4, 0.05, 1000);
+    }
+
     GraphVisualizer(Graph* graph){
         for (int i = 0; i < graph->vertices.size(); i++) {
             Vertex* currentVertex = graph->vertices[i];
@@ -175,7 +179,7 @@ public:
             vertices.append(visualVertex);
         }
 
-        spreadVertices(0.1, 0.4, 0.05, 1000);
+        defaultSpreadVertices();
         
         // Adding EdgeVisualizers
         for (int i = 0; i < graph->vertices.size(); i++) {

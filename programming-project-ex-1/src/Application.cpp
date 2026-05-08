@@ -74,6 +74,10 @@ void Application::onClick(bobcat::Widget* sender){
         graphVisualizer->renderMode = RenderMode::EVERYTHING;
         canvas->redraw();
     }
+    else if (sender == regenGraphButton) {
+        graphVisualizer->defaultSpreadVertices();
+        canvas->redraw();
+    }
 }
 
 void Application::onCanvasMouseDown(bobcat::Widget* sender, float mx, float my){
@@ -115,6 +119,7 @@ void Application::initUI() {
     regenGraphButton = new Button(500, 2, 200, 20, "Regenerate Graph");
     visualizerBox = new TextBox(425, 375, 350, 25, "Click on the graph for info!");
     ON_MOUSE_DOWN(canvas, Application::onCanvasMouseDown);
+    ON_CLICK(regenGraphButton, Application::onClick);
     
     window->show();
 }
