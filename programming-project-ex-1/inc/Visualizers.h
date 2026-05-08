@@ -78,6 +78,40 @@ enum RenderMode {
 };
 
 class GraphVisualizer : public Visualizer {
+    
+    void moveCloser(VertexVisualizer* vertex1, VertexVisualizer* vertex2, float step) {
+        if (vertex1->x < vertex2->x) {
+            vertex1->x += step;
+            vertex2->x -= step;
+        } else {
+            vertex1->x -= step;
+            vertex2->x += step;
+        }
+        if (vertex1->y < vertex2->y) {
+            vertex1->y += step;
+            vertex2->y -= step;
+        } else {
+            vertex1->y -= step;
+            vertex2->y += step;
+        }
+    }
+
+    void moveFurther(VertexVisualizer* vertex1, VertexVisualizer* vertex2, float step) {
+        if (vertex1->x < vertex2->x) {
+            vertex1->x -= step;
+            vertex2->x += step;
+        } else {
+            vertex1->x += step;
+            vertex2->x -= step;
+        }
+        if (vertex1->y < vertex2->y) {
+            vertex1->y -= step;
+            vertex2->y += step;
+        } else {
+            vertex1->y += step;
+            vertex2->y -= step;
+        }
+    }
 
 public:
     ArrayList<VertexVisualizer*> vertices;
@@ -89,77 +123,59 @@ public:
     
     RenderMode renderMode;
 
-   GraphVisualizer(Graph* graph){
-    // Gives each vertex a random starting position
-    srand(time(0));
-    for (int i = 0; i < graph->vertices.size(); i++) {
-        Vertex* currentVertex = graph->vertices[i];
-        float x = ((float)rand() / RAND_MAX) * 2.0 - 1.0;
-        float y = ((float)rand() / RAND_MAX) * 2.0 - 1.0;
-        VertexVisualizer* visualVertex = new VertexVisualizer(x, y, currentVertex->data, currentVertex->index);
-        vertices.append(visualVertex);
+    EdgeVisualizer* visualizedEdge(int index1, int index2) {
+        for (int i = 0; i < edges.size(); i++) {
+            if (    (edges[i]->vertex1->cityIndex == index1 && edges[i]->vertex2->cityIndex == index2)
+                ||  (edges[i]->vertex1->cityIndex == index2 && edges[i]->vertex2->cityIndex == index1) ){
+                return edges[i];
+            }
+        }
+        return nullptr;
     }
 
-    // Set Minimum and Maximum distance between each vertex squared
-    float squareMin = 0.1;
-    float squareMax = 0.4; 
-    float step = 0.05;
+    void spreadVertices(float squareMin, float squareMax, float step, unsigned int iterations) {
+        // Randomize positions
+        for (int i = 0; i < vertices.size(); i++) {
+            VertexVisualizer* currentVertex = vertices[i];
+            currentVertex->x = ((float)rand() / RAND_MAX) * 2.0 - 1.0;
+            currentVertex->y = ((float)rand() / RAND_MAX) * 2.0 - 1.0;
+        }
 
-    // adjust positions 1000 times
-    for (int iter = 0; iter < 1000; iter++) {
-        for (int i = 0; i < graph->vertices.size(); i++) {
-            for (int j = i + 1; j < graph->vertices.size(); j++) {
+        // adjust positions over a number of iterations
+        for (unsigned int iter = 0; iter < iterations; iter++) {
+            for (int i = 0; i < vertices.size() - 1; i++) {
+                VertexVisualizer* vertex1 = vertices[i];
+                
+                for (int j = i + 1; j < vertices.size(); j++) {
+                    VertexVisualizer* vertex2 = vertices[j];
+                    
+                    // Calculate the squared distance between two vertices
+                    float dx = vertices[j]->x - vertices[i]->x;
+                    float dy = vertices[j]->y - vertices[i]->y;
+                    float squareDist = dx * dx + dy * dy;
 
-                // Calculate the squared distance between two vertices
-                float dx = vertices[j]->x - vertices[i]->x;
-                float dy = vertices[j]->y - vertices[i]->y;
-                float squareDist = dx * dx + dy * dy;
+                    bool edgeExists = visualizedEdge(vertex1->cityIndex, vertex2->cityIndex) != nullptr;
 
-                // Check if edge exists between two vertices
-                bool edgeExists = false;
-                for (int k = 0; k < graph->vertices[i]->edgeList.size(); k++) {
-                    if (graph->vertices[i]->edgeList[k]->to == graph->vertices[j]) {
-                        edgeExists = true;
-                        break;
-                    }
-                }
-
-                // If the edge exists and too far apart, move them closer
-                if (edgeExists && squareDist > squareMax) {
-                    if (vertices[i]->x < vertices[j]->x) {
-                        vertices[i]->x += step;
-                        vertices[j]->x -= step;
-                    } else {
-                        vertices[i]->x -= step;
-                        vertices[j]->x += step;
-                    }
-                    if (vertices[i]->y < vertices[j]->y) {
-                        vertices[i]->y += step;
-                        vertices[j]->y -= step;
-                    } else {
-                        vertices[i]->y -= step;
-                        vertices[j]->y += step;
-                    }
-                // If there is no Edge and too close, move them apart
-                } else if (squareDist < squareMin) {
-                    if (vertices[i]->x < vertices[j]->x) {
-                        vertices[i]->x -= step;
-                        vertices[j]->x += step;
-                    } else {
-                        vertices[i]->x += step;
-                        vertices[j]->x -= step;
-                    }
-                    if (vertices[i]->y < vertices[j]->y) {
-                        vertices[i]->y -= step;
-                        vertices[j]->y += step;
-                    } else {
-                        vertices[i]->y += step;
-                        vertices[j]->y -= step;
+                    // If the edge exists and too far apart, move them closer
+                    if (edgeExists && squareDist > squareMax) {
+                        moveCloser(vertex1, vertex2, step);
+                    // If too close, move them apart, not needed if they were moved closer
+                    } else if (squareDist < squareMin) {
+                        moveFurther(vertex1, vertex2, step);
                     }
                 }
             }
         }
     }
+
+    GraphVisualizer(Graph* graph){
+        for (int i = 0; i < graph->vertices.size(); i++) {
+            Vertex* currentVertex = graph->vertices[i];
+            VertexVisualizer* visualVertex = new VertexVisualizer(0.0, 0.0, currentVertex->data, currentVertex->index);
+            vertices.append(visualVertex);
+        }
+
+        spreadVertices(0.1, 0.4, 0.05, 1000);
         
         // Adding EdgeVisualizers
         for (int i = 0; i < graph->vertices.size(); i++) {
@@ -188,16 +204,6 @@ public:
         }
         renderMode = RenderMode::VERTICES;
         pathExists = false;
-    }
-    
-    EdgeVisualizer* visualizedEdge(int index1, int index2) {
-        for (int i = 0; i < edges.size(); i++) {
-            if (    (edges[i]->vertex1->cityIndex == index1 && edges[i]->vertex2->cityIndex == index2)
-                ||  (edges[i]->vertex1->cityIndex == index2 && edges[i]->vertex2->cityIndex == index1) ){
-                return edges[i];
-            }
-        }
-        throw std::logic_error("There doesn't exist an edge between these vertexes");
     }
 
     void visualizePath(Waypoint* endpoint) {

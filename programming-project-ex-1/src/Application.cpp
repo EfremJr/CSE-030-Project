@@ -136,6 +136,8 @@ Application::Application() {
 }
 
 Application::Application(std::istream* vertices, std::istream* edges) {
+    // Seeding upon starting the app
+    srand(time(0));
     initData(vertices, edges);
     initUI();
 }
