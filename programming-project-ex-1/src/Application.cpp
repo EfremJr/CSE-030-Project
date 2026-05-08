@@ -3,8 +3,10 @@
 #include <Application.h>
 #include <bobcat_ui/bobcat_ui.h>
 #include <bobcat_ui/dropdown.h>
+#include <bobcat_ui/textbox.h>
 #include <fstream>
 #include <sstream>
+#include <string>
 
 using namespace bobcat;
 using namespace std;
@@ -74,6 +76,10 @@ void Application::onClick(bobcat::Widget* sender){
     }
 }
 
+void Application::onCanvasMouseDown(bobcat::Widget* sender, float mx, float my){
+    visualizerBox->label(to_string(mx) + to_string(my));
+}
+
 void Application::initUI() {
     window = new Window(25, 75, 800, 400, "Simple Navigation Project");
     fromDropdown = new Dropdown(25, 25, 165, 25, "Origin");
@@ -94,6 +100,8 @@ void Application::initUI() {
 
     clearButton = new Button(25, 350, 350, 25, "Clear");
     showAllButton = new Button(25, 300, 350, 25, "Show All Flights Connections");
+
+    outputBox = new TextBox(25, 160, 350, 130, "Hello World");
     
     ON_CLICK(searchButton, Application::onClick);
     ON_CLICK(clearButton, Application::onClick);
@@ -102,6 +110,11 @@ void Application::initUI() {
     graphVisualizer = new GraphVisualizer(&g);
     canvas = new Canvas(graphVisualizer, 425, 25, 350, 350);
     canvas->redraw();
+
+    
+    regenGraphButton = new Button(500, 2, 200, 20, "Regenerate Graph");
+    visualizerBox = new TextBox(425, 375, 350, 25, "Click on the graph for info!");
+    ON_MOUSE_DOWN(canvas, Application::onCanvasMouseDown);
     
     window->show();
 }

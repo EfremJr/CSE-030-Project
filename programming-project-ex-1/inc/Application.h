@@ -6,6 +6,7 @@
 #include <Graph.h>
 #include <bobcat_ui/dropdown.h>
 #include <Canvas.h>
+#include <bobcat_ui/textbox.h>
 #include <iostream>
 
 class Application : public bobcat::Application_ {
@@ -17,6 +18,10 @@ class Application : public bobcat::Application_ {
     bobcat::Button* searchButton;
     bobcat::Button* clearButton;
     bobcat::Button* showAllButton;
+    bobcat::Button* regenGraphButton;
+
+    bobcat::TextBox* visualizerBox;
+    bobcat::TextBox* outputBox;
 
     Graph g;
     ArrayList<Vertex*> cities;
@@ -31,6 +36,8 @@ class Application : public bobcat::Application_ {
     void initUI();
     
     void onClick(bobcat::Widget* sender);
+
+    void onCanvasMouseDown(bobcat::Widget* sender, float mx, float my);
     
 public:
     Application();
