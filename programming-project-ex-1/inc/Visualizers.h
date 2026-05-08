@@ -8,6 +8,7 @@
 #include <Graph.h>
 #include <Visualizer.h>
 #include <string>
+#include <ctime>
 
 class VertexVisualizer : public Visualizer {
 
@@ -88,15 +89,77 @@ public:
     
     RenderMode renderMode;
 
-    GraphVisualizer(Graph* graph){
-        // Adding VertexVisualizers
-        float dif = 2.0 / ( (float) graph->vertices.size() + 1);
-        for (int i = 0; i < graph->vertices.size(); i++) {
-            Vertex* currentVertex = graph->vertices[i];
+   GraphVisualizer(Graph* graph){
+    // Gives each vertex a random starting position
+    srand(time(0));
+    for (int i = 0; i < graph->vertices.size(); i++) {
+        Vertex* currentVertex = graph->vertices[i];
+        float x = ((float)rand() / RAND_MAX) * 2.0 - 1.0;
+        float y = ((float)rand() / RAND_MAX) * 2.0 - 1.0;
+        VertexVisualizer* visualVertex = new VertexVisualizer(x, y, currentVertex->data, currentVertex->index);
+        vertices.append(visualVertex);
+    }
 
-            VertexVisualizer* visualVertex = new VertexVisualizer(-1.0 + dif * (i+1), -1.0 + dif * (i+1), currentVertex->data, currentVertex->index);
-            vertices.append(visualVertex);
+    // Set Minimum and Maximum distance between each vertex squared
+    float squareMin = 0.1;
+    float squareMax = 0.4; 
+    float step = 0.05;
+
+    // adjust positions 1000 times
+    for (int iter = 0; iter < 1000; iter++) {
+        for (int i = 0; i < graph->vertices.size(); i++) {
+            for (int j = i + 1; j < graph->vertices.size(); j++) {
+
+                // Calculate the squared distance between two vertices
+                float dx = vertices[j]->x - vertices[i]->x;
+                float dy = vertices[j]->y - vertices[i]->y;
+                float squareDist = dx * dx + dy * dy;
+
+                // Check if edge exists between two vertices
+                bool edgeExists = false;
+                for (int k = 0; k < graph->vertices[i]->edgeList.size(); k++) {
+                    if (graph->vertices[i]->edgeList[k]->to == graph->vertices[j]) {
+                        edgeExists = true;
+                        break;
+                    }
+                }
+
+                // If the edge exists and too far apart, move them closer
+                if (edgeExists && squareDist > squareMax) {
+                    if (vertices[i]->x < vertices[j]->x) {
+                        vertices[i]->x += step;
+                        vertices[j]->x -= step;
+                    } else {
+                        vertices[i]->x -= step;
+                        vertices[j]->x += step;
+                    }
+                    if (vertices[i]->y < vertices[j]->y) {
+                        vertices[i]->y += step;
+                        vertices[j]->y -= step;
+                    } else {
+                        vertices[i]->y -= step;
+                        vertices[j]->y += step;
+                    }
+                // If there is no Edge and too close, move them apart
+                } else if (!edgeExists && squareDist < squareMin) {
+                    if (vertices[i]->x < vertices[j]->x) {
+                        vertices[i]->x -= step;
+                        vertices[j]->x += step;
+                    } else {
+                        vertices[i]->x += step;
+                        vertices[j]->x -= step;
+                    }
+                    if (vertices[i]->y < vertices[j]->y) {
+                        vertices[i]->y -= step;
+                        vertices[j]->y += step;
+                    } else {
+                        vertices[i]->y += step;
+                        vertices[j]->y -= step;
+                    }
+                }
+            }
         }
+    }
         
         // Adding EdgeVisualizers
         for (int i = 0; i < graph->vertices.size(); i++) {
