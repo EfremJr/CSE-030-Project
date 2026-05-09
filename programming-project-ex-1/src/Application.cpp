@@ -43,7 +43,7 @@ void Application::onClick(bobcat::Widget* sender){
         int fromIndex = fromDropdown->value();
         int toIndex = toDropdown->value();
         std::string searchOption = searchDropdown->text();
-
+        
         if (searchOption == "Least Stops"){
             path = g.bfs(cities[fromIndex], cities[toIndex]);
         }
@@ -53,24 +53,48 @@ void Application::onClick(bobcat::Widget* sender){
         else if (searchOption == "Lowest Time"){
             path = g.ucsTime(cities[fromIndex], cities[toIndex]);
         }
-        cout << path->vertex->data;
+        
+        Stack<string> orderedPath;
+        orderedPath.push(path->vertex->data);
         Waypoint* temp = path;
         while (temp->parent != nullptr) {
             temp = temp->parent;
-            cout << " <- " << temp->vertex->data;
+            orderedPath.push(temp->vertex->data);
         }
-        cout << endl;
+        
+        string pathText;
+        pathText = orderedPath.pop();
+        int i = 1;
+        int count = 1;
+        while(!orderedPath.isEmpty()){
+            if (i == 3){
+                i = 0;
+                pathText += "\n";
+            }
+            pathText += " -> " + orderedPath.pop();
+            i++;
+            count++;
+        }
+        
+        if (fromIndex == toIndex){
+            outputBox->label("You're already here! No flight needed!\nCost: FREE!\nTime: 0");
+        } else{
+            outputBox->label(pathText + "\nNumber of Flights: " + to_string(count) + "\nCost: $" + to_string(path->partialCost) + "\nTime: " + to_string(path->partialTime) + " Hours");
+        }
+
         graphVisualizer->visualizePath(path);
         graphVisualizer->renderMode = RenderMode::PATH;
         canvas->redraw();
     }
     else if (sender == clearButton) {
         path = nullptr;
+        outputBox->label("");
         graphVisualizer->clearPath();
         graphVisualizer->renderMode = RenderMode::VERTICES;
         canvas->redraw();
     }
     else if (sender == showAllButton) {
+        outputBox->label("");
         graphVisualizer->renderMode = RenderMode::EVERYTHING;
         canvas->redraw();
     }
@@ -168,7 +192,7 @@ void Application::initUI() {
     clearButton = new Button(25, 350, 350, 25, "Clear");
     showAllButton = new Button(25, 300, 350, 25, "Show All Flights Connections");
 
-    outputBox = new TextBox(25, 160, 350, 130, "Hello World");
+    outputBox = new TextBox(25, 160, 350, 130, "");
     
     ON_CLICK(searchButton, Application::onClick);
     ON_CLICK(clearButton, Application::onClick);
