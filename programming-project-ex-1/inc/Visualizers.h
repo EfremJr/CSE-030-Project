@@ -272,7 +272,7 @@ public:
     }
 
     void defaultSpreadVertices() {
-        spreadVertices(0.1, 0.4, 0.05, 1000);
+        spreadVertices(0.04, 0.2, 0.05, 1500);
     }
 
     GraphVisualizer(Graph* graph){
