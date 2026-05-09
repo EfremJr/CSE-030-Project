@@ -79,6 +79,8 @@ enum RenderMode {
 };
 
 class GraphVisualizer : public Visualizer {
+
+    
     
     void moveCloser(VertexVisualizer* vertex1, VertexVisualizer* vertex2, float step) {
         float dist = std::sqrt(std::pow(vertex2->x - vertex1->x, 2) + std::pow(vertex2->y - vertex1->y, 2));
@@ -108,6 +110,32 @@ class GraphVisualizer : public Visualizer {
         vertex2->x -= dx;
         vertex1->y += dy;
         vertex2->y -= dy;
+    }
+
+    void oneDirMoveCloser(VertexVisualizer* vertex, float x, float y, float step) {
+        float dist = std::sqrt(std::pow(x - vertex->x, 2) + std::pow(y - vertex->y, 2));
+        
+        float unitX = (x - vertex->x) / dist;
+        float unitY = (y - vertex->y) / dist;
+
+        float dx = unitX * step;
+        float dy = unitY * step;
+
+        vertex->x += dx;
+        vertex->y += dy;
+    }
+
+    void oneDirMoveFurther(VertexVisualizer* vertex, float x, float y, float step) {
+        float dist = std::sqrt(std::pow(x - vertex->x, 2) + std::pow(y - vertex->y, 2));
+        
+        float unitX = (x - vertex->x) / dist;
+        float unitY = (y - vertex->y) / dist;
+
+        float dx = -unitX * step;
+        float dy = -unitY * step;
+
+        vertex->x += dx;
+        vertex->y += dy;
     }
 
 public:
@@ -160,6 +188,71 @@ public:
                     } else if (squareDist < squareMin) {
                         moveFurther(vertex1, vertex2, step);
                     }
+                    
+                }
+
+                for (int j = 0; j < edges.size(); j++) {
+                    EdgeVisualizer* edge = edges[j];
+                    if (edge->vertex1->cityIndex == vertex1->cityIndex || edge->vertex2->cityIndex == vertex1->cityIndex) {
+                        continue;
+                    }
+                    
+                    VertexVisualizer* v1 = edge->vertex1;
+                    VertexVisualizer* v2 = edge->vertex2;
+
+                    float edgedx = v2->x - v1->x;
+                    float edgedy = v2->y - v1->y;
+
+                    float vertexdx = vertex1->x - v1->x;
+                    float vertexdy = vertex1->y - v1->y;
+
+                    float dotProduct = vertexdx * edgedx + vertexdy * edgedy;
+                    float edgeLength = std::sqrt(std::pow(edgedx, 2) + std::pow(edgedy, 2));
+
+                    if (edgeLength == 0) {
+                        continue;
+                    }
+
+                    float projection = dotProduct / edgeLength;
+
+                    if (projection < 0 || projection > edgeLength) {
+                        continue;
+                    }
+
+                    float edgeUnitX = edgedx / edgeLength;
+                    float edgeUnitY = edgedy / edgeLength;
+                    
+                    float projx = v1->x + edgeUnitX * projection;
+                    float projy = v1->y + edgeUnitY * projection;
+
+                    float squareDist = std::pow(vertex1->x - projx, 2) + std::pow(vertex1->y - projy, 2);
+
+                    if (squareDist < squareMin) {
+                        oneDirMoveFurther(vertex1, projx, projy, step);
+                    }
+                }
+
+
+                // Keep the dots from going off of the canvas
+                float dx = 0;
+                float dy = 0;
+                
+                if (vertex1->x < -1) {
+                    dx = -(vertex1->x + 1);
+                }
+                else if (vertex1->x > 1) {
+                    dx = -(vertex1->x - 1);
+                }
+                if (vertex1->y < -1) {
+                    dy = -(vertex1->y + 1);
+                }
+                else if (vertex1->y > 1) {
+                    dy = -(vertex1->y - 1);
+                }
+
+                for (int j = 0; j < vertices.size(); j++) {
+                    vertices[i]->x += dx;
+                    vertices[i]->y += dy;
                 }
             }
         }
