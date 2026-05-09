@@ -313,19 +313,18 @@ public:
         pathExists = false;
     }
 
-    void visualizePath(Waypoint* endpoint) {
+    void visualizePath(Path* path) {
         clearPath();
 
-        Waypoint* position = endpoint;
-        while (position->parent != nullptr) {
-            pathVertices.append(vertices[position->vertex->index]);
+        for (int i = 0; i < path->list.size()-1; i++) {
+            Vertex* vertex = path->list[i]->vertex;
+            Vertex* nextVertex = path->list[i+1]->vertex;
+            pathVertices.append(vertices[vertex->index]);
 
-            EdgeVisualizer* edge = visualizedEdge(position->vertex->index, position->parent->vertex->index);
+            EdgeVisualizer* edge = visualizedEdge(vertex->index, nextVertex->index);
             pathEdges.append(edge);
-            
-            position = position->parent;
         }
-        pathVertices.append(vertices[position->vertex->index]);
+        pathVertices.append(vertices[path->list[path->list.size()-1]->vertex->index]);
 
         pathExists = true;
     }

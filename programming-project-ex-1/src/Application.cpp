@@ -40,6 +40,10 @@ void Application::initData(istream* vertices, istream* edges) {
 
 void Application::onClick(bobcat::Widget* sender){
     if (sender == searchButton){
+        if (path != nullptr) {
+            delete path;
+        }
+
         int fromIndex = fromDropdown->value();
         int toIndex = toDropdown->value();
         std::string searchOption = searchDropdown->text();
@@ -53,33 +57,19 @@ void Application::onClick(bobcat::Widget* sender){
         else if (searchOption == "Lowest Time"){
             path = g.ucsTime(cities[fromIndex], cities[toIndex]);
         }
-        
-        Stack<string> orderedPath;
-        orderedPath.push(path->vertex->data);
-        Waypoint* temp = path;
-        while (temp->parent != nullptr) {
-            temp = temp->parent;
-            orderedPath.push(temp->vertex->data);
-        }
-        
-        string pathText;
-        pathText = orderedPath.pop();
-        int i = 1;
-        int count = 1;
-        while(!orderedPath.isEmpty()){
-            if (i == 3){
-                i = 0;
+
+        string pathText = path->list[0]->vertex->data;
+        for(int i = 1; i < path->list.size(); i++) {
+            if (i % 3 == 0) {
                 pathText += "\n";
             }
-            pathText += " -> " + orderedPath.pop();
-            i++;
-            count++;
+            pathText += " -> " + path->list[i]->vertex->data;
         }
         
         if (fromIndex == toIndex){
             outputBox->label("You're already here! No flight needed!\nCost: FREE!\nTime: 0");
         } else{
-            outputBox->label(pathText + "\nNumber of Flights: " + to_string(count) + "\nCost: $" + to_string(path->partialCost) + "\nTime: " + to_string(path->partialTime) + " Hours");
+            outputBox->label(pathText + "\nNumber of Flights: " + to_string(path->list.size()-1) + "\nCost: $" + to_string(path->cost) + "\nTime: " + to_string(path->time) + " Hours");
         }
 
         graphVisualizer->visualizePath(path);
@@ -87,7 +77,10 @@ void Application::onClick(bobcat::Widget* sender){
         canvas->redraw();
     }
     else if (sender == clearButton) {
-        path = nullptr;
+        if (path != nullptr) {
+            delete path;
+            path = nullptr;
+        }
         outputBox->label("");
         graphVisualizer->clearPath();
         graphVisualizer->renderMode = RenderMode::VERTICES;

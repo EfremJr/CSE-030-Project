@@ -6,7 +6,9 @@
 #include <HashTable.h>
 #include <Queue.h>
 #include <Stack.h>
+#include <cstddef>
 #include <ostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -97,6 +99,53 @@ inline std::ostream &operator<<(std::ostream &os, Waypoint *wp) {
     return os;
 }
 
+struct Path {
+    ArrayList<Waypoint*> list;
+    int cost;
+    int time;
+
+    Path() {}
+
+    Path(Waypoint* end) {
+        cost = end->partialCost;
+        time = end->partialTime;
+
+        Stack<Waypoint*> stack;
+        while (end != nullptr) {
+            stack.push(end);
+            end = end->parent;
+        }
+
+        while (!stack.isEmpty()) {
+            list.append(stack.pop());
+        }
+    }
+
+    ~Path() {
+        for (int i = 0; i < list.size(); i++) {
+            delete list[i];
+        }
+    }
+
+    bool contains(Waypoint* point) {
+        for (int i = 0; i < list.size(); i++) {
+            if (list[i]->vertex->index == point->vertex->index) {
+                return true;
+            }
+        }
+        return false;
+    }
+};
+
+inline std::ostream &operator<<(std::ostream &os, Path *pa) {
+    os << pa->list[0]->vertex->data;
+    for (int i = 1; i < pa->list.size(); i++) {
+        os << " -> " << pa->list[i]->vertex->data;
+    }
+
+    return os;
+}
+
 struct Graph {
     ArrayList<Vertex *> vertices;
     
@@ -118,7 +167,25 @@ struct Graph {
         x->edgeList.append(new Edge(x, y, cost, time));
     }
 
-    Waypoint *bfs(Vertex *start, Vertex *destination) {
+    void cleanupWaypoints(Waypoint* start, Path* exceptions) {
+        for (int i = 0; i < start->children.size(); i++) {
+            cleanupWaypoints(start->children[i], exceptions);
+        }
+        if (!exceptions->contains(start)) {
+            delete start;
+        }
+        else {
+            ArrayList<Waypoint*> newChildren;
+            for (int i = 0; i < start->children.size(); i++) {
+                if (start->children[i] != nullptr) {
+                    newChildren.append(start->children[i]);
+                }
+            }
+            start->children = newChildren;
+        }
+    }
+
+    Path *bfs(Vertex *start, Vertex *destination) {
         std::cout << "Running Breadth-First Search" << std::endl;
         Queue<Waypoint *> frontier;
         HashTable<std::string> seen;
@@ -134,11 +201,11 @@ struct Graph {
             result = frontier.dequeue();
 
             if (result->vertex == destination) {
-                //Destructor for BFS
-                while (!frontier.isEmpty()) {
-                    delete frontier.dequeue();
-                }
-                return result;
+                Path* path = new Path(result);
+
+                cleanupWaypoints(first, path);
+
+                return path;
             }
 
             result->expand();
@@ -182,7 +249,7 @@ struct Graph {
         return nullptr;
     }
 
-    Waypoint *dfs(Vertex *start, Vertex *destination) {
+    Path *dfs(Vertex *start, Vertex *destination) {
         std::cout << "Running Depth-First Search" << std::endl;
 
         Stack<Waypoint *> frontier;
@@ -199,10 +266,9 @@ struct Graph {
             result = frontier.pop();
 
             if (result->vertex == destination) {
-                while (!frontier.isEmpty()) {
-                    delete frontier.pop();
-                }
-                return result;
+                Path* path = new Path(result);
+                cleanupWaypoints(first, path);
+                return path;
             }
 
             result->expand();
@@ -239,7 +305,7 @@ struct Graph {
         return nullptr;
     }
 
-    Waypoint *ucsCost(Vertex *start, Vertex *destination) {
+    Path *ucsCost(Vertex *start, Vertex *destination) {
         std::cout << "Running Uniform Cost Search on edge costs" << std::endl;
 
         // Should be a priority queue
@@ -257,10 +323,9 @@ struct Graph {
             result = frontier.removeLast();
 
             if (result->vertex == destination) {
-                while (frontier.size() > 0) {
-                    delete frontier.removeLast();
-                }
-                return result;
+                Path* path = new Path(result);
+                cleanupWaypoints(first, path);
+                return path;
             }
 
             result->expand();
@@ -378,7 +443,7 @@ struct Graph {
         return nullptr;
     }
     
-    Waypoint *ucsTime(Vertex *start, Vertex *destination) {
+    Path *ucsTime(Vertex *start, Vertex *destination) {
         std::cout << "Running Uniform Cost Search on edge times" << std::endl;
 
         // Should be a priority queue
@@ -396,10 +461,9 @@ struct Graph {
             result = frontier.removeLast();
 
             if (result->vertex == destination) {
-                while (frontier.size() > 0) {
-                    delete frontier.removeLast();
-                }
-                return result;
+                Path* path = new Path(result);
+                cleanupWaypoints(first, path);
+                return path;
             }
 
             result->expand();

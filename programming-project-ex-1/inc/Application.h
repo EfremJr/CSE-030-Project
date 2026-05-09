@@ -29,7 +29,7 @@ class Application : public bobcat::Application_ {
     Canvas* canvas;
     GraphVisualizer* graphVisualizer;
 
-    Waypoint* path;
+    Path* path;
 
     void initData(std::istream* vertices, std::istream* edges);
 
