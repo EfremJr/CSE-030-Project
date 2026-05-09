@@ -158,6 +158,46 @@ public:
         return nullptr;
     }
 
+    void spreadHelperEdge(VertexVisualizer* vertex1, EdgeVisualizer* edge, float squareMin, float step) {
+        if (edge->vertex1->cityIndex == vertex1->cityIndex || edge->vertex2->cityIndex == vertex1->cityIndex) {
+            return;
+        }
+        
+        VertexVisualizer* v1 = edge->vertex1;
+        VertexVisualizer* v2 = edge->vertex2;
+
+        float edgedx = v2->x - v1->x;
+        float edgedy = v2->y - v1->y;
+
+        float vertexdx = vertex1->x - v1->x;
+        float vertexdy = vertex1->y - v1->y;
+
+        float dotProduct = vertexdx * edgedx + vertexdy * edgedy;
+        float edgeLength = std::sqrt(std::pow(edgedx, 2) + std::pow(edgedy, 2));
+
+        if (edgeLength == 0) {
+            return;
+        }
+
+        float projection = dotProduct / edgeLength;
+
+        if (projection < 0 || projection > edgeLength) {
+            return;
+        }
+
+        float edgeUnitX = edgedx / edgeLength;
+        float edgeUnitY = edgedy / edgeLength;
+        
+        float projx = v1->x + edgeUnitX * projection;
+        float projy = v1->y + edgeUnitY * projection;
+
+        float squareDist = std::pow(vertex1->x - projx, 2) + std::pow(vertex1->y - projy, 2);
+
+        if (squareDist < squareMin) {
+            oneDirMoveFurther(vertex1, projx, projy, step);
+        }
+    }
+
     void spreadVertices(float squareMin, float squareMax, float step, unsigned int iterations) {
         // Randomize positions
         for (int i = 0; i < vertices.size(); i++) {
@@ -171,6 +211,8 @@ public:
             for (int i = 0; i < vertices.size() - 1; i++) {
                 VertexVisualizer* vertex1 = vertices[i];
                 
+
+                // Check against other vertices
                 for (int j = i + 1; j < vertices.size(); j++) {
                     VertexVisualizer* vertex2 = vertices[j];
                     
@@ -188,73 +230,35 @@ public:
                     } else if (squareDist < squareMin) {
                         moveFurther(vertex1, vertex2, step);
                     }
-                    
                 }
 
+                // Check against edges
                 for (int j = 0; j < edges.size(); j++) {
-                    EdgeVisualizer* edge = edges[j];
-                    if (edge->vertex1->cityIndex == vertex1->cityIndex || edge->vertex2->cityIndex == vertex1->cityIndex) {
-                        continue;
-                    }
-                    
-                    VertexVisualizer* v1 = edge->vertex1;
-                    VertexVisualizer* v2 = edge->vertex2;
-
-                    float edgedx = v2->x - v1->x;
-                    float edgedy = v2->y - v1->y;
-
-                    float vertexdx = vertex1->x - v1->x;
-                    float vertexdy = vertex1->y - v1->y;
-
-                    float dotProduct = vertexdx * edgedx + vertexdy * edgedy;
-                    float edgeLength = std::sqrt(std::pow(edgedx, 2) + std::pow(edgedy, 2));
-
-                    if (edgeLength == 0) {
-                        continue;
-                    }
-
-                    float projection = dotProduct / edgeLength;
-
-                    if (projection < 0 || projection > edgeLength) {
-                        continue;
-                    }
-
-                    float edgeUnitX = edgedx / edgeLength;
-                    float edgeUnitY = edgedy / edgeLength;
-                    
-                    float projx = v1->x + edgeUnitX * projection;
-                    float projy = v1->y + edgeUnitY * projection;
-
-                    float squareDist = std::pow(vertex1->x - projx, 2) + std::pow(vertex1->y - projy, 2);
-
-                    if (squareDist < squareMin) {
-                        oneDirMoveFurther(vertex1, projx, projy, step);
-                    }
-                }
-
-
-                // Keep the dots from going off of the canvas
-                float dx = 0;
-                float dy = 0;
-                
-                if (vertex1->x < -1) {
-                    dx = -(vertex1->x + 1);
-                }
-                else if (vertex1->x > 1) {
-                    dx = -(vertex1->x - 1);
-                }
-                if (vertex1->y < -1) {
-                    dy = -(vertex1->y + 1);
-                }
-                else if (vertex1->y > 1) {
-                    dy = -(vertex1->y - 1);
-                }
-
-                for (int j = 0; j < vertices.size(); j++) {
-                    vertices[i]->x += dx;
-                    vertices[i]->y += dy;
+                    spreadHelperEdge(vertex1, edges[j], squareMin, step);
                 }
             }
+
+            // Check the skipped vertex against edges
+            for (int j = 0; j < edges.size(); j++) {
+                spreadHelperEdge(vertices[vertices.size()-1], edges[j], squareMin, step);
+            }
+        }
+
+        // Center the graph
+        float sumX = 0.0;
+        float sumY = 0.0;
+
+        for (int i = 0; i < vertices.size(); i++) {
+            sumX += vertices[i]->x;
+            sumY += vertices[i]->y;
+        }
+
+        float avgX = sumX / vertices.size();
+        float avgY = sumY / vertices.size();
+
+        for (int i = 0; i < vertices.size(); i++) {
+            vertices[i]->x -= avgX;
+            vertices[i]->y -= avgY;
         }
     }
 
