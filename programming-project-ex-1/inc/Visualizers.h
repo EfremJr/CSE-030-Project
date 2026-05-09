@@ -4,6 +4,7 @@
 #include "ArrayList.h"
 #include "HashTable.h"
 #include <GL/gl.h>
+#include <cmath>
 #include <iostream>
 #include <Graph.h>
 #include <Visualizer.h>
@@ -80,37 +81,33 @@ enum RenderMode {
 class GraphVisualizer : public Visualizer {
     
     void moveCloser(VertexVisualizer* vertex1, VertexVisualizer* vertex2, float step) {
-        if (vertex1->x < vertex2->x) {
-            vertex1->x += step;
-            vertex2->x -= step;
-        } else {
-            vertex1->x -= step;
-            vertex2->x += step;
-        }
-        if (vertex1->y < vertex2->y) {
-            vertex1->y += step;
-            vertex2->y -= step;
-        } else {
-            vertex1->y -= step;
-            vertex2->y += step;
-        }
+        float dist = std::sqrt(std::pow(vertex2->x - vertex1->x, 2) + std::pow(vertex2->y - vertex1->y, 2));
+        
+        float unitX = (vertex2->x - vertex1->x) / dist;
+        float unitY = (vertex2->y - vertex1->y) / dist;
+
+        float dx = unitX * step;
+        float dy = unitY * step;
+
+        vertex1->x += dx;
+        vertex2->x -= dx;
+        vertex1->y += dy;
+        vertex2->y -= dy;
     }
 
     void moveFurther(VertexVisualizer* vertex1, VertexVisualizer* vertex2, float step) {
-        if (vertex1->x < vertex2->x) {
-            vertex1->x -= step;
-            vertex2->x += step;
-        } else {
-            vertex1->x += step;
-            vertex2->x -= step;
-        }
-        if (vertex1->y < vertex2->y) {
-            vertex1->y -= step;
-            vertex2->y += step;
-        } else {
-            vertex1->y += step;
-            vertex2->y -= step;
-        }
+        float dist = std::sqrt(std::pow(vertex2->x - vertex1->x, 2) + std::pow(vertex2->y - vertex1->y, 2));
+        
+        float unitX = (vertex2->x - vertex1->x) / dist;
+        float unitY = (vertex2->y - vertex1->y) / dist;
+
+        float dx = -unitX * step;
+        float dy = -unitY * step;
+
+        vertex1->x += dx;
+        vertex2->x -= dx;
+        vertex1->y += dy;
+        vertex2->y -= dy;
     }
 
 public:
