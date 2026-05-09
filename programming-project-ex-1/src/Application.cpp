@@ -234,3 +234,22 @@ Application::Application(std::istream* vertices, std::istream* edges) {
     initData(vertices, edges);
     initUI();
 }
+
+Application::~Application() {
+    delete canvas;
+    delete graphVisualizer;
+
+    if (path) { delete path; }
+
+    delete fromDropdown;
+    delete toDropdown;
+    delete searchDropdown;
+    delete searchButton;
+    delete clearButton;
+    delete showAllButton;
+    delete regenGraphButton;
+    delete visualizerBox;
+    delete outputBox;
+
+    delete window;
+}

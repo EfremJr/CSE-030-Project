@@ -44,6 +44,8 @@ public:
 
     Application(std::istream* vertices, std::istream* edges);
 
+    ~Application();
+
     friend struct TestApplication;
 };
 

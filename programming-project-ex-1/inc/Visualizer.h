@@ -6,6 +6,7 @@
 class Visualizer {
     public:
     virtual void draw() = 0;
+    virtual ~Visualizer() {}
 };
 
 #endif
