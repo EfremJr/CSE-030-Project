@@ -148,6 +148,15 @@ public:
     
     RenderMode renderMode;
 
+    ~GraphVisualizer() {
+        for (int i = 0; i < vertices.size(); i++) {
+            delete vertices[i];
+        }
+        for (int i = 0; i <edges.size(); i++) {
+            delete edges[i];
+        }
+    }
+
     EdgeVisualizer* visualizedEdge(int index1, int index2) {
         for (int i = 0; i < edges.size(); i++) {
             if (    (edges[i]->vertex1->cityIndex == index1 && edges[i]->vertex2->cityIndex == index2)
