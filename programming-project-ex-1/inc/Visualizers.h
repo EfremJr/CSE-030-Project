@@ -12,6 +12,7 @@
 #include <ctime>
 
 class VertexVisualizer : public Visualizer {
+    static constexpr float POINT_SIZE = 10.0;
 
 public:
     float x;
@@ -26,11 +27,17 @@ public:
         this->cityIndex = cityIndex;
     }
 
-    void drawColor(float r, float g, float b) {
-        std::cout << "    Rending Vertex (" << x << ", " << y << ")" << std::endl;
+    static float xRadius(int canvasWidth) {
+        return POINT_SIZE / canvasWidth;
+    }
 
+    static float yRadius(int canvasHeight) {
+        return POINT_SIZE / canvasHeight;
+    }
+
+    void drawColor(float r, float g, float b) {
         glColor3f(r, g, b);
-        glPointSize(10.0);
+        glPointSize(POINT_SIZE);
 
         glBegin(GL_POINTS);
             glVertex2f(x, y);
@@ -84,9 +91,14 @@ class GraphVisualizer : public Visualizer {
     
     void moveCloser(VertexVisualizer* vertex1, VertexVisualizer* vertex2, float step) {
         float dist = std::sqrt(std::pow(vertex2->x - vertex1->x, 2) + std::pow(vertex2->y - vertex1->y, 2));
-        
-        float unitX = (vertex2->x - vertex1->x) / dist;
-        float unitY = (vertex2->y - vertex1->y) / dist;
+
+        float unitX = 1.0;
+        float unitY = 0.0;
+
+        if (dist != 0) {
+            unitX = (vertex2->x - vertex1->x) / dist;
+            unitY = (vertex2->y - vertex1->y) / dist;
+        }
 
         float dx = unitX * step;
         float dy = unitY * step;
@@ -100,8 +112,13 @@ class GraphVisualizer : public Visualizer {
     void moveFurther(VertexVisualizer* vertex1, VertexVisualizer* vertex2, float step) {
         float dist = std::sqrt(std::pow(vertex2->x - vertex1->x, 2) + std::pow(vertex2->y - vertex1->y, 2));
         
-        float unitX = (vertex2->x - vertex1->x) / dist;
-        float unitY = (vertex2->y - vertex1->y) / dist;
+        float unitX = 1.0;
+        float unitY = 0;
+
+        if (dist != 0) {
+            unitX = (vertex2->x - vertex1->x) / dist;
+            unitY = (vertex2->y - vertex1->y) / dist;
+        }
 
         float dx = -unitX * step;
         float dy = -unitY * step;
@@ -114,9 +131,14 @@ class GraphVisualizer : public Visualizer {
 
     void oneDirMoveCloser(VertexVisualizer* vertex, float x, float y, float step) {
         float dist = std::sqrt(std::pow(x - vertex->x, 2) + std::pow(y - vertex->y, 2));
-        
-        float unitX = (x - vertex->x) / dist;
-        float unitY = (y - vertex->y) / dist;
+
+        float unitX = 1.0;
+        float unitY = 0.0;
+
+        if (dist != 0) {
+            unitX = (x - vertex->x) / dist;
+            unitY = (y - vertex->y) / dist;
+        }
 
         float dx = unitX * step;
         float dy = unitY * step;
@@ -127,9 +149,14 @@ class GraphVisualizer : public Visualizer {
 
     void oneDirMoveFurther(VertexVisualizer* vertex, float x, float y, float step) {
         float dist = std::sqrt(std::pow(x - vertex->x, 2) + std::pow(y - vertex->y, 2));
-        
-        float unitX = (x - vertex->x) / dist;
-        float unitY = (y - vertex->y) / dist;
+
+        float unitX = 1.0;
+        float unitY = 0.0;
+
+        if (dist != 0) {
+            unitX = (x - vertex->x) / dist;
+            unitY = (y - vertex->y) / dist;
+        }
 
         float dx = -unitX * step;
         float dy = -unitY * step;
@@ -139,6 +166,9 @@ class GraphVisualizer : public Visualizer {
     }
 
 public:
+    int canvasWidth;
+    int canvasHeight;
+
     ArrayList<VertexVisualizer*> vertices;
     ArrayList<EdgeVisualizer*> edges;
     
@@ -208,10 +238,13 @@ public:
     }
 
     bool verticesInCanvas() {
+        float xRadius = VertexVisualizer::xRadius(canvasWidth);
+        float yRadius = VertexVisualizer::yRadius(canvasHeight);
+
         // Checks for any vertices outside canvas
         for (int i = 0; i < vertices.size(); i++) {
-            if (vertices[i]->x > 1.0 || vertices[i]->x < -1.0 ||
-                vertices[i]->y > 1.0 || vertices[i]->y < -1.0) {
+            if (vertices[i]->x + xRadius > 1.0 || vertices[i]->x - xRadius < -1.0 ||
+                vertices[i]->y + yRadius > 1.0 || vertices[i]->y - yRadius < -1.0) {
                 return false;
             }
         }
@@ -219,12 +252,15 @@ public:
     }
 
     void clampVertices() {
+        float xRadius = VertexVisualizer::xRadius(canvasWidth);
+        float yRadius = VertexVisualizer::yRadius(canvasHeight);
+        
         // Any vertices outside the canvas brought to edge
         for (int i = 0; i < vertices.size(); i++) {
-            if (vertices[i]->x > 1.0) vertices[i]->x = 1.0;
-            if (vertices[i]->x < -1.0) vertices[i]->x = -1.0;
-            if (vertices[i]->y > 1.0) vertices[i]->y = 1.0;
-            if (vertices[i]->y < -1.0) vertices[i]->y = -1.0;
+            if (vertices[i]->x > 1.0) vertices[i]->x = 1.0 - xRadius;
+            if (vertices[i]->x < -1.0) vertices[i]->x = -1.0 + xRadius;
+            if (vertices[i]->y > 1.0) vertices[i]->y = 1.0 - yRadius;
+            if (vertices[i]->y < -1.0) vertices[i]->y = -1.0 + yRadius;
         }
     }
 
@@ -274,6 +310,11 @@ public:
             }
         }
 
+        // No need to center if there are no vertices
+        if (vertices.size() == 0) {
+            return;
+        }
+
         // Center the graph
         float sumX = 0.0;
         float sumY = 0.0;
@@ -292,71 +333,16 @@ public:
         }
     }
 
-    void defaultSpreadVertices(float squareMin, float squareMax, float step, unsigned int iterations) {    
+    void defaultSpreadVertices() {    
+    float squareMin = 0.04;
+    float squareMax = 0.2;
+    float step = 0.05;
+    unsigned int iterations = 1500;
+    
     // try 5 times to get a good map
     for (int attempt = 0; attempt < 5; attempt++) {
-
-        // give each vertex a random starting position
-        for (int i = 0; i < vertices.size(); i++) {
-            VertexVisualizer* currentVertex = vertices[i];
-            currentVertex->x = ((float)rand() / RAND_MAX) * 2.0 - 1.0;
-            currentVertex->y = ((float)rand() / RAND_MAX) * 2.0 - 1.0;
-        }
-
-        // adjust positions over a number of iterations
-        for (unsigned int iter = 0; iter < iterations; iter++) {
-            for (int i = 0; i < vertices.size() - 1; i++) {
-                VertexVisualizer* vertex1 = vertices[i];
-
-                // check against other vertices
-                for (int j = i + 1; j < vertices.size(); j++) {
-                    VertexVisualizer* vertex2 = vertices[j];
-                    
-                    // calculate the squared distance between two vertices
-                    float dx = vertices[j]->x - vertices[i]->x;
-                    float dy = vertices[j]->y - vertices[i]->y;
-                    float squareDist = dx * dx + dy * dy;
-
-                    bool edgeExists = visualizedEdge(vertex1->cityIndex, vertex2->cityIndex) != nullptr;
-
-                    // if edge exists and too far apart move closer
-                    if (edgeExists && squareDist > squareMax) {
-                        moveCloser(vertex1, vertex2, step);
-                    // if too close move apart
-                    } else if (squareDist < squareMin) {
-                        moveFurther(vertex1, vertex2, step);
-                    }
-                }
-
-                // check against edges
-                for (int j = 0; j < edges.size(); j++) {
-                    spreadHelperEdge(vertex1, edges[j], squareMin, step);
-                }
-            }
-
-            // check the last vertex against edges
-            for (int j = 0; j < edges.size(); j++) {
-                spreadHelperEdge(vertices[vertices.size()-1], edges[j], squareMin, step);
-            }
-        }
-
-        // center the graph
-        float sumX = 0.0;
-        float sumY = 0.0;
-
-        for (int i = 0; i < vertices.size(); i++) {
-            sumX += vertices[i]->x;
-            sumY += vertices[i]->y;
-        }
-
-        float avgX = sumX / vertices.size();
-        float avgY = sumY / vertices.size();
-
-        for (int i = 0; i < vertices.size(); i++) {
-            vertices[i]->x -= avgX;
-            vertices[i]->y -= avgY;
-        }
-
+        spreadVertices(squareMin, squareMax, step, iterations);
+        
         // if all vertices are inside the canvas we are done
         if (verticesInCanvas()) {
             return;
@@ -367,7 +353,10 @@ public:
     clampVertices();
 }
 
-    GraphVisualizer(Graph* graph){
+    GraphVisualizer(Graph* graph, int canvasWidth, int canvasHeight){
+        this->canvasWidth = canvasWidth;
+        this->canvasHeight = canvasHeight;
+
         for (int i = 0; i < graph->vertices.size(); i++) {
             Vertex* currentVertex = graph->vertices[i];
             VertexVisualizer* visualVertex = new VertexVisualizer(0.0, 0.0, currentVertex->data, currentVertex->index);
@@ -394,15 +383,16 @@ public:
                 if (seen) {
                     continue;
                 }
-
+                
                 EdgeVisualizer* visualEdge = new EdgeVisualizer(vertices[edge->from->index], vertices[edge->to->index], edge->cost, edge->time);
                 edges.append(visualEdge);
             }
         }
+
         renderMode = RenderMode::VERTICES;
         pathExists = false;
 
-        defaultSpreadVertices(0.04, 0.2, 0.05, 1500);
+        defaultSpreadVertices();
     };
 
     void visualizePath(Path* path) {

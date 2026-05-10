@@ -92,7 +92,8 @@ void Application::onClick(bobcat::Widget* sender){
         canvas->redraw();
     }
     else if (sender == regenGraphButton) {
-        graphVisualizer->defaultSpreadVertices(0.04, 0.2, 0.05, 1500);
+        graphVisualizer->defaultSpreadVertices();
+
         canvas->redraw();
     }
 }
@@ -190,9 +191,11 @@ void Application::initUI() {
     ON_CLICK(searchButton, Application::onClick);
     ON_CLICK(clearButton, Application::onClick);
     ON_CLICK(showAllButton, Application::onClick);
-
-    graphVisualizer = new GraphVisualizer(&g);
-    canvas = new Canvas(graphVisualizer, 425, 25, 350, 350);
+    
+    int canvasWidth = 350;
+    int canvasHeight = 350;
+    graphVisualizer = new GraphVisualizer(&g, canvasWidth, canvasHeight);
+    canvas = new Canvas(graphVisualizer, 425, 25, canvasWidth, canvasHeight);
     canvas->redraw();
 
     
