@@ -207,6 +207,27 @@ public:
         }
     }
 
+    bool verticesInCanvas() {
+        // Checks for any vertices outside canvas
+        for (int i = 0; i < vertices.size(); i++) {
+            if (vertices[i]->x > 1.0 || vertices[i]->x < -1.0 ||
+                vertices[i]->y > 1.0 || vertices[i]->y < -1.0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void clampVertices() {
+        // Any vertices outside the canvas brought to edge
+        for (int i = 0; i < vertices.size(); i++) {
+            if (vertices[i]->x > 1.0) vertices[i]->x = 1.0;
+            if (vertices[i]->x < -1.0) vertices[i]->x = -1.0;
+            if (vertices[i]->y > 1.0) vertices[i]->y = 1.0;
+            if (vertices[i]->y < -1.0) vertices[i]->y = -1.0;
+        }
+    }
+
     void spreadVertices(float squareMin, float squareMax, float step, unsigned int iterations) {
         // Randomize positions
         for (int i = 0; i < vertices.size(); i++) {
@@ -271,9 +292,80 @@ public:
         }
     }
 
-    void defaultSpreadVertices() {
-        spreadVertices(0.04, 0.2, 0.05, 1500);
+    void defaultSpreadVertices(float squareMin, float squareMax, float step, unsigned int iterations) {    
+    // try 5 times to get a good map
+    for (int attempt = 0; attempt < 5; attempt++) {
+
+        // give each vertex a random starting position
+        for (int i = 0; i < vertices.size(); i++) {
+            VertexVisualizer* currentVertex = vertices[i];
+            currentVertex->x = ((float)rand() / RAND_MAX) * 2.0 - 1.0;
+            currentVertex->y = ((float)rand() / RAND_MAX) * 2.0 - 1.0;
+        }
+
+        // adjust positions over a number of iterations
+        for (unsigned int iter = 0; iter < iterations; iter++) {
+            for (int i = 0; i < vertices.size() - 1; i++) {
+                VertexVisualizer* vertex1 = vertices[i];
+
+                // check against other vertices
+                for (int j = i + 1; j < vertices.size(); j++) {
+                    VertexVisualizer* vertex2 = vertices[j];
+                    
+                    // calculate the squared distance between two vertices
+                    float dx = vertices[j]->x - vertices[i]->x;
+                    float dy = vertices[j]->y - vertices[i]->y;
+                    float squareDist = dx * dx + dy * dy;
+
+                    bool edgeExists = visualizedEdge(vertex1->cityIndex, vertex2->cityIndex) != nullptr;
+
+                    // if edge exists and too far apart move closer
+                    if (edgeExists && squareDist > squareMax) {
+                        moveCloser(vertex1, vertex2, step);
+                    // if too close move apart
+                    } else if (squareDist < squareMin) {
+                        moveFurther(vertex1, vertex2, step);
+                    }
+                }
+
+                // check against edges
+                for (int j = 0; j < edges.size(); j++) {
+                    spreadHelperEdge(vertex1, edges[j], squareMin, step);
+                }
+            }
+
+            // check the last vertex against edges
+            for (int j = 0; j < edges.size(); j++) {
+                spreadHelperEdge(vertices[vertices.size()-1], edges[j], squareMin, step);
+            }
+        }
+
+        // center the graph
+        float sumX = 0.0;
+        float sumY = 0.0;
+
+        for (int i = 0; i < vertices.size(); i++) {
+            sumX += vertices[i]->x;
+            sumY += vertices[i]->y;
+        }
+
+        float avgX = sumX / vertices.size();
+        float avgY = sumY / vertices.size();
+
+        for (int i = 0; i < vertices.size(); i++) {
+            vertices[i]->x -= avgX;
+            vertices[i]->y -= avgY;
+        }
+
+        // if all vertices are inside the canvas we are done
+        if (verticesInCanvas()) {
+            return;
+        }
     }
+
+    // if after 5 attempts there are still vertices outside clamp them in
+    clampVertices();
+}
 
     GraphVisualizer(Graph* graph){
         for (int i = 0; i < graph->vertices.size(); i++) {
@@ -310,8 +402,8 @@ public:
         renderMode = RenderMode::VERTICES;
         pathExists = false;
 
-        defaultSpreadVertices();
-    }
+        defaultSpreadVertices(0.04, 0.2, 0.05, 1500);
+    };
 
     void visualizePath(Path* path) {
         clearPath();

@@ -92,7 +92,7 @@ void Application::onClick(bobcat::Widget* sender){
         canvas->redraw();
     }
     else if (sender == regenGraphButton) {
-        graphVisualizer->defaultSpreadVertices();
+        graphVisualizer->defaultSpreadVertices(0.04, 0.2, 0.05, 1500);
         canvas->redraw();
     }
 }
