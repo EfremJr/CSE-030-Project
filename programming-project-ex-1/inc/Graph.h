@@ -6,10 +6,7 @@
 #include <HashTable.h>
 #include <Queue.h>
 #include <Stack.h>
-#include <cstddef>
 #include <ostream>
-#include <sstream>
-#include <stdexcept>
 #include <string>
 
 struct Vertex;
@@ -73,18 +70,50 @@ struct Waypoint {
     }
 
     void expand() {
-        if (children.size() > 0) {
-            throw std::logic_error("Tried to expand Waypoint after it has already been expanded.");
-        }
         for (int i = 0; i < vertex->edgeList.size(); i++) {
+            bool exists = false;
+            for (int j = 0; j < children.size(); j++) {
+                if (vertex->edgeList[i]->to->index == children[j]->vertex->index) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (exists) { continue; }
+            
             Waypoint *temp = new Waypoint(vertex->edgeList[i]->to);
             temp->parent = this;
             temp->cost = vertex->edgeList[i]->cost;
             temp->time = vertex->edgeList[i]->time;
-            temp->partialCost = partialCost + vertex->edgeList[i]->cost;
-            temp->partialTime = partialTime + vertex->edgeList[i]->time;
+            temp->partialCost = partialCost + temp->cost;
+            temp->partialTime = partialTime + temp->time;
             children.append(temp);
         }
+    }
+
+    void reconstructChildren() {
+        ArrayList<Waypoint*> reconstructedChildren;
+        for (int i = 0; i < children.size(); i++) {
+            if (children[i] != nullptr) {
+                reconstructedChildren.append(children[i]);
+            }
+        }
+        children = reconstructedChildren;
+    }
+
+    void setParent(Waypoint* parent) {
+        this->parent = parent;
+        this->partialCost = parent->partialCost + cost;
+        this->partialTime = parent->partialTime + time;
+    }
+
+    void removeChild(Waypoint* child) {
+        for (int i = 0; i < children.size(); i++) {
+            if (children[i]->vertex->index == child->vertex->index) {
+                children[i] = nullptr;
+                break;
+            }
+        }
+        reconstructChildren();
     }
 };
 
@@ -175,13 +204,7 @@ struct Graph {
             delete start;
         }
         else {
-            ArrayList<Waypoint*> newChildren;
-            for (int i = 0; i < start->children.size(); i++) {
-                if (start->children[i] != nullptr) {
-                    newChildren.append(start->children[i]);
-                }
-            }
-            start->children = newChildren;
+            start->reconstructChildren();
         }
     }
 
@@ -354,61 +377,52 @@ struct Graph {
 
                     seen.insert(result->children[i]->vertex->data);
                 } else {
-                    // If it is in the seen list, we may have to do some work
 
-                    // First we will check if it is still in the frontier but
-                    // with a higher partial cost
-                    Waypoint *worsePath = nullptr;
-
-                    // TODO: Check if this works right
                     /*
-                        I don't think we need to check for children because the
-                        children shouldn't have been added yet if the other
-                        Waypoint is still in the frontier.
+                        Since we've already seen this vertex, we'll check if it's still in the frontier,
+                        and whether the one in the frontier is worse than the one we just found.
                     */
 
+                    int worsePathIndex = -1;
+
                     for (int k = 0; k < frontier.size(); k++) {
-                        if (frontier[k]->vertex->data ==
-                            result->children[i]->vertex->data) {
-                            if (frontier[k]->partialCost >
-                                result->children[i]->partialCost) {
-                                worsePath = frontier[k];
-                                // The same node was visited before,
-                                // but with a higher partial cost
+                        if (frontier[k]->vertex->index == result->children[i]->vertex->index) {
+                            if (frontier[k]->partialCost > result->children[i]->partialCost) {
+                                worsePathIndex = k;
                                 break;
                             }
                         }
                     }
 
-                    // If we had a worse node before, we need to change it.
-                    if (worsePath) {
+                    // If the waypoint in the frontier is worse, we replace it with the better one.
+                    if (worsePathIndex != -1) {
+                        Waypoint* worse = frontier[worsePathIndex];
+                        Waypoint* better = result->children[i];
+                        frontier[worsePathIndex] = better;
+
                         std::cout
                             << "Found another way to get to "
-                            << result->children[i]->vertex->data << ". Was "
-                            << worsePath->partialCost << ", but now it is "
-                            << result->children[i]->partialCost << std::endl;
+                            << better->vertex->data << ". Was "
+                            << worse->partialCost << ", but now it is "
+                            << better->partialCost << std::endl;
 
-                        // Make it so that the children of the worse waypoint
-                        // become our children
+                        // Replacing the parent of the worse path's children
                         for (int k = 0; k < frontier.size(); k++) {
-                            if (frontier[k]->parent->vertex->data ==
-                                result->children[i]->vertex->data) {
-                                frontier[k]->parent = result->children[i];
+                            if (frontier[k]->parent->vertex->index == worse->vertex->index) {
+                                worse->removeChild(frontier[k]);
+                                
+                                frontier[k]->setParent(better);
+                                better->children.append(frontier[k]);
                             }
                         }
 
-                        // Replace the worse one with the better one
-                        for (int k = 0; k < frontier.size(); k++) {
-                            if (frontier[k]->vertex->data ==
-                                result->children[i]->vertex->data) {
-                                delete frontier[k];
-                                frontier[k] = result->children[i];
-                                break;
-                            }
-                        }
+                        worse->parent->removeChild(worse);
 
-                        // Sort the frontier because the replacement above
-                        // may have caused things to fall out of order
+                        Path* emptyPath = new Path();
+                        cleanupWaypoints(worse, emptyPath);
+                        delete emptyPath;
+
+                        // Sort the frontier
                         for (int a = 1; a < frontier.size(); a++) {
                             int b = a;
                             while (b > 0 && frontier[b]->partialCost >
@@ -419,9 +433,6 @@ struct Graph {
                                 b--;
                             }
                         }
-                        //Deleting unused child if wont be used further after added to Seen
-                    } else {
-                        delete result->children[i];
                     }
                 }
             }
@@ -492,61 +503,52 @@ struct Graph {
 
                     seen.insert(result->children[i]->vertex->data);
                 } else {
-                    // If it is in the seen list, we may have to do some work
 
-                    // First we will check if it is still in the frontier but
-                    // with a higher partial cost
-                    Waypoint *worsePath = nullptr;
-
-                    // TODO: Check if this works right
                     /*
-                        I don't think we need to check for children because the
-                        children shouldn't have been added yet if the other
-                        Waypoint is still in the frontier.
+                        Since we've already seen this vertex, we'll check if it's still in the frontier,
+                        and whether the one in the frontier is worse than the one we just found.
                     */
 
+                    int worsePathIndex = -1;
+
                     for (int k = 0; k < frontier.size(); k++) {
-                        if (frontier[k]->vertex->data ==
-                            result->children[i]->vertex->data) {
-                            if (frontier[k]->partialTime >
-                                result->children[i]->partialTime) {
-                                worsePath = frontier[k];
-                                // The same node was visited before,
-                                // but with a higher partial cost
+                        if (frontier[k]->vertex->index == result->children[i]->vertex->index) {
+                            if (frontier[k]->partialTime > result->children[i]->partialTime) {
+                                worsePathIndex = k;
                                 break;
                             }
                         }
                     }
 
-                    // If we had a worse node before, we need to change it.
-                    if (worsePath) {
+                    // If the waypoint in the frontier is worse, we replace it with the better one.
+                    if (worsePathIndex != -1) {
+                        Waypoint* worse = frontier[worsePathIndex];
+                        Waypoint* better = result->children[i];
+                        frontier[worsePathIndex] = better;
+
                         std::cout
                             << "Found another way to get to "
-                            << result->children[i]->vertex->data << ". Was "
-                            << worsePath->partialTime << ", but now it is "
-                            << result->children[i]->partialTime << std::endl;
+                            << better->vertex->data << ". Was "
+                            << worse->partialTime << ", but now it is "
+                            << better->partialTime << std::endl;
 
-                        // Make it so that the children of the worse waypoint
-                        // become our children
+                        // Replacing the parent of the worse path's children
                         for (int k = 0; k < frontier.size(); k++) {
-                            if (frontier[k]->parent->vertex->data ==
-                                result->children[i]->vertex->data) {
-                                frontier[k]->parent = result->children[i];
+                            if (frontier[k]->parent->vertex->index == worse->vertex->index) {
+                                worse->removeChild(frontier[k]);
+                                
+                                frontier[k]->setParent(better);
+                                better->children.append(frontier[k]);
                             }
                         }
 
-                        // Replace the worse one with the better one
-                        for (int k = 0; k < frontier.size(); k++) {
-                            if (frontier[k]->vertex->data ==
-                                result->children[i]->vertex->data) {
-                                delete frontier[k];
-                                frontier[k] = result->children[i];
-                                break;
-                            }
-                        }
+                        worse->parent->removeChild(worse);
+                        
+                        Path* emptyPath = new Path();
+                        cleanupWaypoints(worse, emptyPath);
+                        delete emptyPath;
 
-                        // Sort the frontier because the replacement above
-                        // may have caused things to fall out of order
+                        // Sort the frontier
                         for (int a = 1; a < frontier.size(); a++) {
                             int b = a;
                             while (b > 0 && frontier[b]->partialTime >
@@ -557,9 +559,6 @@ struct Graph {
                                 b--;
                             }
                         }
-                    //Deleting unused child if wont be used further after added to Seen//Deleting unused child if wont be used further after added to Seen
-                    } else {
-                        delete result->children[i];
                     }
                 }
             }

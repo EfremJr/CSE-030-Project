@@ -281,8 +281,6 @@ public:
             VertexVisualizer* visualVertex = new VertexVisualizer(0.0, 0.0, currentVertex->data, currentVertex->index);
             vertices.append(visualVertex);
         }
-
-        defaultSpreadVertices();
         
         // Adding EdgeVisualizers
         for (int i = 0; i < graph->vertices.size(); i++) {
@@ -311,6 +309,8 @@ public:
         }
         renderMode = RenderMode::VERTICES;
         pathExists = false;
+
+        defaultSpreadVertices();
     }
 
     void visualizePath(Path* path) {

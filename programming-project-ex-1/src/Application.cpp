@@ -207,6 +207,9 @@ void Application::initUI() {
 
 Application::Application() {
     // this is a change that I made - John Quinn
+    
+    // Seeding upon starting the app
+    srand(time(0));
 
     // By default, add data from the files in the assets folder
     fstream vertices, edges;
