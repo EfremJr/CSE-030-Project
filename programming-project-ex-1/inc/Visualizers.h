@@ -264,13 +264,17 @@ public:
         }
     }
 
-    void spreadVertices(float squareMin, float squareMax, float step, unsigned int iterations) {
+    void randomizeVertices() {
         // Randomize positions
         for (int i = 0; i < vertices.size(); i++) {
             VertexVisualizer* currentVertex = vertices[i];
             currentVertex->x = ((float)rand() / RAND_MAX) * 2.0 - 1.0;
             currentVertex->y = ((float)rand() / RAND_MAX) * 2.0 - 1.0;
         }
+    }
+    
+    void spreadVertices(float squareMin, float squareMax, float step, unsigned int iterations) {
+        randomizeVertices();
 
         // adjust positions over a number of iterations
         for (unsigned int iter = 0; iter < iterations; iter++) {
@@ -333,11 +337,9 @@ public:
         }
     }
 
-    void defaultSpreadVertices() {    
-    float squareMin = 0.04;
-    float squareMax = 0.2;
-    float step = 0.05;
-    unsigned int iterations = 1500;
+    void defaultSpreadVertices(float min, float max, float step, unsigned int iterations) {    
+    float squareMin = min * min;
+    float squareMax = max * max;
     
     // try 5 times to get a good map
     for (int attempt = 0; attempt < 5; attempt++) {
@@ -392,7 +394,7 @@ public:
         renderMode = RenderMode::VERTICES;
         pathExists = false;
 
-        defaultSpreadVertices();
+        randomizeVertices();
     };
 
     void visualizePath(Path* path) {

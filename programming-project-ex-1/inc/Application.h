@@ -6,6 +6,8 @@
 #include <Graph.h>
 #include <bobcat_ui/dropdown.h>
 #include <Canvas.h>
+#include <bobcat_ui/float_input.h>
+#include <bobcat_ui/int_input.h>
 #include <bobcat_ui/textbox.h>
 #include <iostream>
 
@@ -22,6 +24,11 @@ class Application : public bobcat::Application_ {
 
     bobcat::TextBox* visualizerBox;
     bobcat::TextBox* outputBox;
+
+    bobcat::FloatInput* minDistInput;
+    bobcat::FloatInput* maxDistInput;
+    bobcat::FloatInput* stepInput;
+    bobcat::IntInput* numIterationsInput;
 
     Graph g;
     ArrayList<Vertex*> cities;

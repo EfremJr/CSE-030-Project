@@ -3,6 +3,8 @@
 #include <Application.h>
 #include <bobcat_ui/bobcat_ui.h>
 #include <bobcat_ui/dropdown.h>
+#include <bobcat_ui/float_input.h>
+#include <bobcat_ui/int_input.h>
 #include <bobcat_ui/textbox.h>
 #include <fstream>
 #include <sstream>
@@ -92,7 +94,7 @@ void Application::onClick(bobcat::Widget* sender){
         canvas->redraw();
     }
     else if (sender == regenGraphButton) {
-        graphVisualizer->defaultSpreadVertices();
+        graphVisualizer->defaultSpreadVertices(minDistInput->value(), maxDistInput->value(), stepInput->value(), numIterationsInput->value());
 
         canvas->redraw();
     }
@@ -191,15 +193,25 @@ void Application::initUI() {
     ON_CLICK(searchButton, Application::onClick);
     ON_CLICK(clearButton, Application::onClick);
     ON_CLICK(showAllButton, Application::onClick);
+
+    minDistInput = new FloatInput(425, 2, 40, 20);
+    minDistInput->Fl_Input::value("0.2");
+    maxDistInput = new FloatInput(508, 2, 40, 20);
+    maxDistInput->Fl_Input::value("0.45");
+    stepInput = new FloatInput(591, 2, 40, 20);
+    stepInput->Fl_Input::value("0.05");
+    numIterationsInput = new IntInput(675, 2, 45, 20);
+    numIterationsInput->value(1500);
     
     int canvasWidth = 350;
     int canvasHeight = 350;
     graphVisualizer = new GraphVisualizer(&g, canvasWidth, canvasHeight);
+    graphVisualizer->defaultSpreadVertices(minDistInput->value(), maxDistInput->value(), stepInput->value(), numIterationsInput->value());
     canvas = new Canvas(graphVisualizer, 425, 25, canvasWidth, canvasHeight);
     canvas->redraw();
 
     
-    regenGraphButton = new Button(500, 2, 200, 20, "Regenerate Graph");
+    regenGraphButton = new Button(725, 2, 50, 20, "Regen");
     visualizerBox = new TextBox(425, 375, 350, 25, "Click on the graph for info!");
     visualizerBox->labelsize(12);
     ON_MOUSE_DOWN(canvas, Application::onCanvasMouseDown);
