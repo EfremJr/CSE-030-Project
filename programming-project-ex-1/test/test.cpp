@@ -299,6 +299,51 @@ Context(TestApplication) {
 
     // Graph Visualizer Tests
 
+    Spec(TestUserInputInvalidValues) {
+        stringstream vertices, edges;
+
+        vertices << "A" << endl << "B" << endl;
+
+        Application* app = new Application(&vertices, &edges);
+
+        FloatInput* min = app->minDistInput;
+        FloatInput* max = app->maxDistInput;
+        FloatInput* step = app->stepInput;
+        IntInput* iter = app->numIterationsInput;
+
+        // Empty Input
+        min->Fl_Input::value("");
+        max->Fl_Input::value("");
+        step->Fl_Input::value("");
+        iter->Fl_Input::value("");
+
+        app->handleChange(min);
+        app->handleChange(max);
+        app->handleChange(step);
+        app->handleChange(iter);
+
+        Assert::That(min->Fl_Input::value(), Equals("0.0"));
+        Assert::That(max->Fl_Input::value(), Equals("0.0"));
+        Assert::That(step->Fl_Input::value(), Equals("0.0"));
+        Assert::That(iter->Fl_Input::value(), Equals("0"));
+
+        // Negative Input
+        min->value(-0.2);
+        max->value(-0.4);
+        step->value(-0.05);
+        iter->value(-100);
+
+        app->handleChange(min);
+        app->handleChange(max);
+        app->handleChange(step);
+        app->handleChange(iter);
+
+        Assert::That(min->value(), Is().EqualTo((float)0.2));
+        Assert::That(max->value(), Is().EqualTo((float)0.4));
+        Assert::That(step->value(), Is().EqualTo((float)0.05));
+        Assert::That(iter->value(), Is().EqualTo(100));
+    }
+
     Spec(TestOverlappingVertices) {
         stringstream vertices, edges;
 

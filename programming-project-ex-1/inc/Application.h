@@ -50,6 +50,8 @@ class Application : public bobcat::Application_ {
     void onClick(bobcat::Widget* sender);
 
     void onCanvasMouseDown(bobcat::Widget* sender, float mx, float my);
+
+    void handleChange(bobcat::Widget* sender);
     
 public:
     Application();

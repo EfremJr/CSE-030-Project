@@ -167,6 +167,37 @@ void Application::onCanvasMouseDown(bobcat::Widget* sender, float mx, float my){
     }
 }
 
+void Application::handleChange(bobcat::Widget* sender) {
+    if (sender == minDistInput || sender == maxDistInput || sender == stepInput) {
+        FloatInput* floatSender = (FloatInput*)sender;
+
+        if (floatSender->empty()) {
+            cout << "Can't have empty graph generation parameter." << endl;
+            floatSender->Fl_Input::value("0.0");
+        }
+        else if (floatSender->value() < 0) {
+            cout << "Can't have negative graph generation parameter." << endl;
+            string value = floatSender->Fl_Input::value();
+            value.erase(0,1);
+            floatSender->Fl_Input::value(value.c_str());
+        }
+    }
+    else if (sender == numIterationsInput) {
+        IntInput* intSender = (IntInput*)sender;
+
+        if (intSender->empty()) {
+            cout << "Can't have empty graph generation parameter." << endl;
+            intSender->Fl_Input::value("0");
+        }
+        else if (intSender->value() < 0) {
+            cout << "Can't have negative graph generation parameter." << endl;
+            string value = intSender->Fl_Input::value();
+            value.erase(0, 1);
+            intSender->Fl_Input::value(value.c_str());
+        }
+    }
+}
+
 void Application::initUI() {
     window = new Window(25, 75, 800, 400, "Simple Navigation Project");
     fromDropdown = new Dropdown(25, 25, 165, 25, "Origin");
@@ -211,6 +242,11 @@ void Application::initUI() {
     stepInput->Fl_Input::value("0.05");
     numIterationsInput = new IntInput(690, 2, 45, 20);
     numIterationsInput->value(1500);
+
+    ON_CHANGE(minDistInput, Application::handleChange);
+    ON_CHANGE(maxDistInput, Application::handleChange);
+    ON_CHANGE(stepInput, Application::handleChange);
+    ON_CHANGE(numIterationsInput, Application::handleChange);
     
     int canvasWidth = 350;
     int canvasHeight = 350;
