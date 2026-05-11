@@ -11,6 +11,8 @@ public:
     Canvas(Visualizer* visualizer, int x, int y, int w, int h);
 
     void render();
+
+    friend struct TestApplication;
 };
 
 #endif

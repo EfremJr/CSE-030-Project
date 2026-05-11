@@ -51,6 +51,10 @@ inline std::ostream &operator<<(std::ostream &os, Vertex *v) {
     return os;
 }
 
+struct Waypoint;
+
+inline std::ostream &operator<<(std::ostream &os, Waypoint *wp);
+
 struct Waypoint {
     Waypoint *parent;
     Vertex *vertex;
@@ -71,6 +75,12 @@ struct Waypoint {
 
     void expand() {
         for (int i = 0; i < vertex->edgeList.size(); i++) {
+            // Don't add as child if its a parent
+            if (parent != nullptr && vertex->edgeList[i]->to->index == parent->vertex->index) {
+                continue;
+            }
+
+            // Doesn't add if child is already in list
             bool exists = false;
             for (int j = 0; j < children.size(); j++) {
                 if (vertex->edgeList[i]->to->index == children[j]->vertex->index) {
@@ -88,6 +98,8 @@ struct Waypoint {
             temp->partialTime = partialTime + temp->time;
             children.append(temp);
         }
+
+        std::cout << "Expanded " << this << std::endl;
     }
 
     void reconstructChildren() {
@@ -101,29 +113,47 @@ struct Waypoint {
     }
 
     void setParent(Waypoint* parent) {
+        std::string oldParent = "null";
+        if (parent != nullptr) { oldParent = parent->vertex->data; }
+        
         this->parent = parent;
         this->partialCost = parent->partialCost + cost;
         this->partialTime = parent->partialTime + time;
+
+        std::cout << "Changed Parent from " << oldParent << " for " << this << std::endl;
     }
 
     void removeChild(Waypoint* child) {
+        bool removed = false;
         for (int i = 0; i < children.size(); i++) {
             if (children[i]->vertex->index == child->vertex->index) {
                 children[i] = nullptr;
+                removed = true;
                 break;
             }
         }
         reconstructChildren();
+
+        if (removed) {
+            std::cout << "Removed child: " << child << " from " << this << std::endl;
+        } else {
+            std::cout << "Couldn't remove child: " << child << " from " << this << std::endl;
+        }
     }
 };
 
 inline std::ostream &operator<<(std::ostream &os, Waypoint *wp) {
-    std::string p = "null";
+    os << "Waypoint: " << wp->vertex->data;
     if (wp->parent != nullptr) {
-        p = wp->parent->vertex->data;
+        os << " (Parent: " << wp->parent->vertex->data << ")";
     }
-
-    os << p << " -> " << wp->vertex->data;
+    if (wp->children.size() > 0) {
+        os << " (Children: " << wp->children[0]->vertex->data;
+        for (int i = 1; i < wp->children.size(); i++) {
+            os << ", " << wp->children[i]->vertex->data;
+        }
+        os << ")";
+    }
 
     return os;
 }
@@ -158,7 +188,7 @@ struct Path {
 
     bool contains(Waypoint* point) {
         for (int i = 0; i < list.size(); i++) {
-            if (list[i]->vertex->index == point->vertex->index) {
+            if (list[i] == point) {
                 return true;
             }
         }
@@ -197,10 +227,22 @@ struct Graph {
     }
 
     void cleanupWaypoints(Waypoint* start, Path* exceptions) {
+        std::cout << "Cleaning - " << start << std::endl;
+        Queue<Waypoint*> childQueue;
+
         for (int i = 0; i < start->children.size(); i++) {
-            cleanupWaypoints(start->children[i], exceptions);
+            childQueue.enqueue(start->children[i]);
         }
+
+        while (!childQueue.isEmpty()) {
+            cleanupWaypoints(childQueue.dequeue(), exceptions);
+        }
+
         if (!exceptions->contains(start)) {
+            std::cout << "    Deleting - " << start->vertex->data << std::endl;
+            if (start->parent != nullptr) {
+                start->parent->removeChild(start); 
+            }
             delete start;
         }
         else {
@@ -236,8 +278,6 @@ struct Graph {
             // that we are on...
 
             // The neighbors are stored in the result->children array
-            std::cout << std::endl
-                      << "Expanding " << result->vertex->data << std::endl;
 
             for (int i = 0; i < result->children.size(); i++) {
                 // For every child of the result node
@@ -296,9 +336,6 @@ struct Graph {
 
             result->expand();
 
-            std::cout << std::endl
-                      << "Expanding " << result->vertex->data << std::endl;
-
             for (int i = 0; i < result->children.size(); i++) {
                 if (!seen.search(result->children[i]->vertex->data)) {
                     std::cout << "Adding " << result->children[i]->vertex->data
@@ -352,8 +389,6 @@ struct Graph {
             }
 
             result->expand();
-
-            std::cout << "Expanding " << result->vertex->data << std::endl;
 
             for (int i = 0; i < result->children.size(); i++) {
                 // Look at each child
@@ -416,8 +451,6 @@ struct Graph {
                             }
                         }
 
-                        worse->parent->removeChild(worse);
-
                         Path* emptyPath = new Path();
                         cleanupWaypoints(worse, emptyPath);
                         delete emptyPath;
@@ -479,8 +512,6 @@ struct Graph {
 
             result->expand();
 
-            std::cout << "Expanding " << result->vertex->data << std::endl;
-
             for (int i = 0; i < result->children.size(); i++) {
                 // Look at each child
                 if (!seen.search(result->children[i]->vertex->data)) {
@@ -541,8 +572,6 @@ struct Graph {
                                 better->children.append(frontier[k]);
                             }
                         }
-
-                        worse->parent->removeChild(worse);
                         
                         Path* emptyPath = new Path();
                         cleanupWaypoints(worse, emptyPath);
@@ -579,6 +608,8 @@ struct Graph {
 
         return nullptr;
     }
+
+    friend struct TestApplication;
 };
 
 inline std::ostream &operator<<(std::ostream &os, const Graph &g) {

@@ -12,9 +12,9 @@
 #include <ctime>
 
 class VertexVisualizer : public Visualizer {
-    static constexpr float POINT_SIZE = 10.0;
-
 public:
+    static constexpr float POINT_SIZE = 10.0;
+    
     float x;
     float y;
     std::string name;
@@ -458,6 +458,8 @@ public:
             }
         }
     }
+
+    friend struct TestApplication;
 };
 
 #endif
