@@ -1,6 +1,8 @@
 #include "Graph.h"
 #include "Visualizers.h"
 #include <bobcat_ui/dropdown.h>
+#include <bobcat_ui/float_input.h>
+#include <bobcat_ui/int_input.h>
 #include <bobcat_ui/textbox.h>
 #include <cmath>
 #include <igloo/igloo.h>
@@ -129,6 +131,11 @@ Context(TestApplication) {
         Dropdown* from = app->fromDropdown;
         Dropdown* to = app->toDropdown;
         Dropdown* searchDrop = app->searchDropdown;
+
+        FloatInput* min = app->minDistInput;
+        FloatInput* max = app->maxDistInput;
+        FloatInput* step = app->stepInput;
+        IntInput* iterations = app->numIterationsInput;
         
         // From Dropdown checks
         from->value(0);
@@ -157,6 +164,12 @@ Context(TestApplication) {
         Assert::That(searchDrop->text(), Equals("Lowest Cost"));
         searchDrop->value(2);
         Assert::That(searchDrop->text(), Equals("Lowest Time"));
+
+        // Graph Input Checks
+        Assert::That(isnan(min->value()), Is().False());
+        Assert::That(isnan(max->value()), Is().False());
+        Assert::That(isnan(step->value()), Is().False());
+        Assert::That(isnan(iterations->value()), Is().False());
         
         // Graph Visualizer checks
         Assert::That(app->graphVisualizer->vertices.size(), Is().EqualTo(4));
@@ -395,7 +408,67 @@ Context(TestApplication) {
         delete app;
     }
 
+    Spec(TestDifferentGraphInputValues) {
+        stringstream vertices, edges;
+
+        vertices << "A" << endl << "B" << endl << "C" << endl;
+        
+        Application* app = new Application(&vertices, &edges);
+
+        srand(1);
+
+        app->onClick(app->regenGraphButton);
+
+        ArrayList<float> xVals;
+        ArrayList<float> yVals;
+
+        for (int i = 0; i < app->graphVisualizer->vertices.size(); i++) {
+            xVals.append(app->graphVisualizer->vertices[i]->x);
+            yVals.append(app->graphVisualizer->vertices[i]->y);
+        }
+
+        app->minDistInput->value(0.5);
+        app->maxDistInput->value(1.0);
+        app->stepInput->value(0.01);
+        app->numIterationsInput->value(100);
+        srand(1);
+        app->onClick(app->regenGraphButton);
+
+        for (int i = 0; i < app->graphVisualizer->vertices.size(); i++) {
+            Assert::That(app->graphVisualizer->vertices[i]->x, Is().Not().EqualTo(xVals[i]));
+            Assert::That(app->graphVisualizer->vertices[i]->y, Is().Not().EqualTo(yVals[i]));
+        }
+    }
+
     // Random Test
+
+    Spec(TestReseedingGraph) {
+        stringstream vertices, edges;
+
+        vertices << "A" << endl << "B" << endl << "C" << endl;
+        
+        Application* app = new Application(&vertices, &edges);
+
+        srand(1);
+
+        app->onClick(app->regenGraphButton);
+
+        ArrayList<float> xVals;
+        ArrayList<float> yVals;
+
+        for (int i = 0; i < app->graphVisualizer->vertices.size(); i++) {
+            xVals.append(app->graphVisualizer->vertices[i]->x);
+            yVals.append(app->graphVisualizer->vertices[i]->y);
+        }
+
+        srand(1);
+        app->onClick(app->regenGraphButton);
+
+        for (int i = 0; i < app->graphVisualizer->vertices.size(); i++) {
+            Assert::That(app->graphVisualizer->vertices[i]->x, Is().EqualTo(xVals[i]));
+            Assert::That(app->graphVisualizer->vertices[i]->y, Is().EqualTo(yVals[i]));
+        }
+    }
 
     Spec(TestRandom) {
         stringstream vertices1, edges1;
