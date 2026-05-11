@@ -46,12 +46,12 @@ class Application : public bobcat::Application_ {
     void initData(std::istream* vertices, std::istream* edges);
 
     void initUI();
+
+    void checkGraphParam(bobcat::Widget* sender);
     
     void onClick(bobcat::Widget* sender);
 
     void onCanvasMouseDown(bobcat::Widget* sender, float mx, float my);
-
-    void handleChange(bobcat::Widget* sender);
     
 public:
     Application();

@@ -316,11 +316,8 @@ Context(TestApplication) {
         max->Fl_Input::value("");
         step->Fl_Input::value("");
         iter->Fl_Input::value("");
-
-        app->handleChange(min);
-        app->handleChange(max);
-        app->handleChange(step);
-        app->handleChange(iter);
+        
+        app->onClick(app->regenGraphButton);
 
         Assert::That(min->Fl_Input::value(), Equals("0.0"));
         Assert::That(max->Fl_Input::value(), Equals("0.0"));
@@ -332,11 +329,8 @@ Context(TestApplication) {
         max->value(-0.4);
         step->value(-0.05);
         iter->value(-100);
-
-        app->handleChange(min);
-        app->handleChange(max);
-        app->handleChange(step);
-        app->handleChange(iter);
+        
+        app->onClick(app->regenGraphButton);
 
         Assert::That(min->value(), Is().EqualTo((float)0.2));
         Assert::That(max->value(), Is().EqualTo((float)0.4));
