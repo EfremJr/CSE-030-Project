@@ -25,6 +25,11 @@ class Application : public bobcat::Application_ {
     bobcat::TextBox* visualizerBox;
     bobcat::TextBox* outputBox;
 
+    bobcat::TextBox* minDistLabel;
+    bobcat::TextBox* maxDistLabel;
+    bobcat::TextBox* stepLabel;
+    bobcat::TextBox* numIterationsLabel;
+    
     bobcat::FloatInput* minDistInput;
     bobcat::FloatInput* maxDistInput;
     bobcat::FloatInput* stepInput;

@@ -193,14 +193,23 @@ void Application::initUI() {
     ON_CLICK(searchButton, Application::onClick);
     ON_CLICK(clearButton, Application::onClick);
     ON_CLICK(showAllButton, Application::onClick);
-
-    minDistInput = new FloatInput(425, 2, 40, 20);
+    
+    minDistLabel = new TextBox(375, 2, 20, 20, "Minimum\nDistance");
+    minDistLabel->labelsize(10);    
+    maxDistLabel = new TextBox(470, 2, 20, 20, "Maximum\nDistance");
+    maxDistLabel->labelsize(10);    
+    stepLabel = new TextBox(565, 2, 20, 20, "Step\nCount");
+    stepLabel->labelsize(10);    
+    numIterationsLabel = new TextBox(640, 2, 20, 20, "Iteration\nCount");
+    numIterationsLabel->labelsize(10);
+    
+    minDistInput = new FloatInput(430, 2, 40, 20);
     minDistInput->Fl_Input::value("0.2");
-    maxDistInput = new FloatInput(508, 2, 40, 20);
+    maxDistInput = new FloatInput(525, 2, 40, 20);
     maxDistInput->Fl_Input::value("0.45");
-    stepInput = new FloatInput(591, 2, 40, 20);
+    stepInput = new FloatInput(600, 2, 40, 20);
     stepInput->Fl_Input::value("0.05");
-    numIterationsInput = new IntInput(675, 2, 45, 20);
+    numIterationsInput = new IntInput(690, 2, 45, 20);
     numIterationsInput->value(1500);
     
     int canvasWidth = 350;
@@ -211,7 +220,8 @@ void Application::initUI() {
     canvas->redraw();
 
     
-    regenGraphButton = new Button(725, 2, 50, 20, "Regen");
+    regenGraphButton = new Button(740, 2, 50, 20, "Regen\nGraph");
+    regenGraphButton->labelsize(8);
     visualizerBox = new TextBox(425, 375, 350, 25, "Click on the graph for info!");
     visualizerBox->labelsize(12);
     ON_MOUSE_DOWN(canvas, Application::onCanvasMouseDown);
