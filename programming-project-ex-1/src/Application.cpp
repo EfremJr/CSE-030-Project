@@ -319,7 +319,7 @@ Application::Application() {
 
     initUI();
 
-    checkPaths();
+    //checkPaths();
 }
 
 Application::Application(std::istream* vertices, std::istream* edges) {
