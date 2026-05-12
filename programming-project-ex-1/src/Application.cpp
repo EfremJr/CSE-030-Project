@@ -266,6 +266,41 @@ void Application::initUI() {
     window->show();
 }
 
+void Application::checkPaths() {
+    if (!graphVisualizer) {
+        return;
+    }
+    
+    int total = 0;
+    int overlapping = 0;
+
+    Path* bfs;
+    Path* cost;
+    Path* time;
+
+    for (int i = 0; i < g.vertices.size()-1; i++) {
+        for (int j = i + 1; j < g.vertices.size(); j++) {
+            total += 3;
+            
+            bfs = g.bfs(g.vertices[i], g.vertices[j]);
+            cost = g.ucsCost(g.vertices[i], g.vertices[j]);
+            time = g.ucsTime(g.vertices[i], g.vertices[j]);
+
+            if (bfs->matches(cost) && time->matches(cost)) {
+                overlapping += 3;
+            }
+            else if (bfs->matches(cost) || time->matches(cost)) {
+                overlapping += 2;
+            }
+        }
+    }
+
+    cout << endl << "Comparing all paths:" << endl;
+    cout << "    Total paths: " << total << endl;
+    cout << "    Overlapping paths: " << overlapping << endl;
+    cout << "    Percentage: %" << ((float)overlapping/(float)total) * 100.0 << endl;
+}
+
 Application::Application() {
     // this is a change that I made - John Quinn
     
@@ -283,6 +318,8 @@ Application::Application() {
     }
 
     initUI();
+
+    checkPaths();
 }
 
 Application::Application(std::istream* vertices, std::istream* edges) {

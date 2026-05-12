@@ -194,6 +194,15 @@ struct Path {
         }
         return false;
     }
+
+    bool matches(Path* other) {
+        for (int i = 0; i < list.size(); i++) {
+            if (list[i]->vertex->index != other->list[i]->vertex->index) {
+                return false;
+            }
+        }
+        return true;
+    }
 };
 
 inline std::ostream &operator<<(std::ostream &os, Path *pa) {
