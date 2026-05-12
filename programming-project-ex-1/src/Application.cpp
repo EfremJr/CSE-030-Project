@@ -8,6 +8,7 @@
 #include <bobcat_ui/textbox.h>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 
 using namespace bobcat;
@@ -44,6 +45,14 @@ void Application::checkGraphParam(bobcat::Widget* sender) {
     if (sender == minDistInput || sender == maxDistInput || sender == stepInput) {
         FloatInput* floatSender = (FloatInput*)sender;
 
+        try {
+            floatSender->value();
+        }
+        catch (const std::invalid_argument& e) {
+            cout << "Invalid graph generation parameter." << endl;
+            floatSender->Fl_Input::value("0.0");
+        }
+
         if (floatSender->empty()) {
             cout << "Can't have empty graph generation parameter." << endl;
             floatSender->Fl_Input::value("0.0");
@@ -57,6 +66,14 @@ void Application::checkGraphParam(bobcat::Widget* sender) {
     }
     else if (sender == numIterationsInput) {
         IntInput* intSender = (IntInput*)sender;
+
+        try {
+            intSender->value();
+        }
+        catch (const std::invalid_argument& e) {
+            cout << "Invalid graph generation parameter." << endl;
+            intSender->Fl_Input::value("0");
+        }
 
         if (intSender->empty()) {
             cout << "Can't have empty graph generation parameter." << endl;
